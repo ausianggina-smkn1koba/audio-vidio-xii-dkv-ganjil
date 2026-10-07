@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pertemuan 13: Audio Mixing & Mastering</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        luxury: {
+                            900: '#0B0F19',
+                            800: '#151B2B',
+                            700: '#1E293B',
+                            gold: '#D4AF37',
+                            goldLight: '#F3E5AB',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(21, 27, 43, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #D4AF37 0%, #F3E5AB 50%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hover-lift {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px -5px rgba(212, 175, 55, 0.15);
+        }
+        .quiz-container::-webkit-scrollbar { width: 8px; }
+        .quiz-container::-webkit-scrollbar-track { background: #151B2B; }
+        .quiz-container::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 4px; }
+
+        /* Audio Mixer Simulator */
+        .mixer-console {
+            background: linear-gradient(180deg, #1a1a2e 0%, #0a0a14 100%);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 12px;
+            padding: 24px;
+            position: relative;
+        }
+        .mixer-channel {
+            background: linear-gradient(180deg, #151B2B 0%, #0B0F19 100%);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .channel-label {
+            font-size: 11px;
+            font-weight: bold;
+            color: #D4AF37;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        .level-meter {
+            width: 14px;
+            height: 180px;
+            background: #0B0F19;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 3px;
+            position: relative;
+            overflow: hidden;
+        }
+        .level-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, #10B981 0%, #10B981 60%, #F59E0B 60%, #F59E0B 85%, #EF4444 85%, #EF4444 100%);
+            transition: height 0.3s ease;
+        }
+        .level-marks {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2px 0;
+            pointer-events: none;
+        }
+        .level-mark {
+            width: 100%;
+            height: 1px;
+            background: rgba(212, 175, 55, 0.2);
+        }
+        .fader-track {
+            width: 6px;
+            height: 140px;
+            background: #0B0F19;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 3px;
+            position: relative;
+        }
+        .fader-knob {
+            position: absolute;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 28px;
+            height: 14px;
+            background: linear-gradient(180deg, #D4AF37 0%, #8B6914 100%);
+            border-radius: 3px;
+            cursor: grab;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            transition: bottom 0.2s ease;
+        }
+        .fader-knob:active { cursor: grabbing; }
+        .fader-value {
+            font-family: monospace;
+            font-size: 11px;
+            color: #F3E5AB;
+            font-weight: bold;
+            min-width: 50px;
+            text-align: center;
+        }
+        .mute-btn, .solo-btn {
+            width: 28px;
+            height: 22px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .mute-btn { background: #374151; color: #9CA3AF; }
+        .mute-btn.active { background: #EF4444; color: white; }
+        .solo-btn { background: #374151; color: #9CA3AF; }
+        .solo-btn.active { background: #F59E0B; color: #0B0F19; }
+
+        .mixer-preset-btn {
+            transition: all 0.2s ease;
+        }
+        .mixer-preset-btn.active {
+            background: #D4AF37 !important;
+            color: #0B0F19 !important;
+            border-color: #D4AF37 !important;
+        }
+
+        /* EQ Curve Visual */
+        .eq-canvas {
+            width: 100%;
+            aspect-ratio: 3/1;
+            background: linear-gradient(180deg, #0B0F19 0%, #151B2B 100%);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        .eq-grid-line {
+            position: absolute;
+            background: rgba(212, 175, 55, 0.1);
+        }
+        .eq-grid-line.horizontal { left: 0; right: 0; height: 1px; }
+        .eq-grid-line.vertical { top: 0; bottom: 0; width: 1px; }
+        .eq-label {
+            position: absolute;
+            font-size: 9px;
+            color: #9CA3AF;
+            font-family: monospace;
+        }
+        .eq-curve {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        /* Waveform */
+        .waveform-display {
+            height: 60px;
+            background: #0B0F19;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1px;
+            padding: 0 8px;
+        }
+        .wave-bar {
+            flex: 1;
+            background: linear-gradient(to top, #D4AF37, #F3E5AB);
+            border-radius: 1px;
+            min-width: 2px;
+            transition: height 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-luxury-900 text-gray-200 font-sans antialiased selection:bg-luxury-gold selection:text-luxury-900">
+
+    <!-- Navigasi -->
+    <nav class="fixed w-full z-50 glass border-b border-luxury-gold/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <a href="index.html" class="font-serif text-lg font-semibold text-white tracking-wide hover:text-luxury-gold transition">
+                        ← Kembali ke Beranda
+                    </a>
+                </div>
+                <div class="hidden md:flex space-x-6 text-sm font-medium">
+                    <a href="#materi" class="hover:text-luxury-gold transition">Materi</a>
+                    <a href="#simulator" class="hover:text-luxury-gold transition">Simulator</a>
+                    <a href="#uji-formatif" class="px-4 py-2 bg-luxury-gold text-luxury-900 font-bold rounded-full hover:bg-yellow-400 transition">Uji Formatif</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Materi -->
+    <header class="pt-32 pb-16 bg-gradient-to-b from-luxury-800 to-luxury-900 border-b border-luxury-gold/10">
+        <div class="max-w-5xl mx-auto px-4 text-center">
+            <span class="inline-block px-4 py-1 rounded-full border border-luxury-gold/30 bg-luxury-gold/10 text-luxury-gold text-xs font-bold tracking-widest uppercase mb-4">
+                Pertemuan 13 dari 16
+            </span>
+            <h1 class="font-serif text-4xl md:text-5xl font-bold text-white mb-6">
+                Audio Mixing <br><span class="gold-gradient-text">& Mastering</span>
+            </h1>
+            <p class="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
+                Seni menyatukan dialog, efek suara, dan musik menjadi satu kesatuan audio yang seimbang, jernih, dan emosional — dari pembersihan noise hingga mastering akhir yang siap didistribusi ke berbagai platform.
+            </p>
+            <div class="mt-8 flex justify-center gap-4">
+                <a href="12.html" class="text-sm text-gray-400 hover:text-luxury-gold transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    Bab Sebelumnya
+                </a>
+                <span class="text-gray-600">|</span>
+                <a href="14.html" class="text-sm text-luxury-gold hover:text-white transition flex items-center gap-2 font-semibold">
+                    Bab Selanjutnya: VFX & Motion Graphics
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Konten Utama -->
+    <main id="materi" class="max-w-5xl mx-auto px-4 py-16 space-y-16">
+
+        <!-- Pendahuluan -->
+        <section class="glass rounded-2xl p-8 md:p-10 border-l-4 border-luxury-gold">
+            <h2 class="font-serif text-2xl font-bold text-white mb-4">Pendahuluan</h2>
+            <p class="text-gray-300 leading-relaxed mb-4">
+                Jika color grading adalah "melukis dengan warna", maka audio mixing adalah <strong class="text-luxury-gold">"mengaransemen orkestra"</strong>. Di tahap ini, editor audio (atau <em>sound designer</em>) berperan sebagai konduktor yang menyeimbangkan tiga elemen utama — <strong class="text-luxury-gold">dialog</strong>, <strong class="text-luxury-gold">sound effect (SFX)</strong>, dan <strong class="text-luxury-gold">musik</strong> — agar bekerja sama dalam melayani cerita, bukan saling bertabrakan.
+            </p>
+            <p class="text-gray-300 leading-relaxed">
+                Pertemuan ini akan membawa Anda menyelami dunia <em>audio post-production</em>: dari membersihkan rekaman dialog yang penuh noise, mengatur EQ agar suara terdengar jernih dan natural, mengompresi dinamika, menambahkan reverb untuk kedalaman, hingga melakukan <em>mastering</em> akhir agar audio Anda memenuhi standar loudness platform distribusi (YouTube, Netflix, TV, bioskop). Inilah tahap yang mengubah "rekaman amatir" menjadi "suara kelas dunia".
+            </p>
+        </section>
+
+        <!-- Konsep Kunci -->
+        <section>
+            <h2 class="font-serif text-2xl font-bold text-luxury-gold mb-6 flex items-center gap-3">
+                <span class="text-3xl">🔑</span> Konsep Kunci
+            </h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🧹</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Audio Cleaning</h3>
+                    <p class="text-sm text-gray-400">Proses menghilangkan noise, hiss, hum, click, dan artefak rekaman yang tidak diinginkan dari audio mentah.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🎚️</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Equalization (EQ)</h3>
+                    <p class="text-sm text-gray-400">Mengatur keseimbangan frekuensi audio (bass, mid, treble) untuk membuat setiap elemen terdengar jernih dan tidak tumpang tindih.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">📊</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Compression</h3>
+                    <p class="text-sm text-gray-400">Mengontrol dinamika audio — meredam suara terlalu keras dan mengangkat suara terlalu pelan agar konsisten.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🎛️</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Audio Mixing</h3>
+                    <p class="text-sm text-gray-400">Menyeimbangkan level volume antara dialog, SFX, dan musik agar harmonis dan melayani cerita.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🔊</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Reverb & Delay</h3>
+                    <p class="text-sm text-gray-400">Efek ruang (gema) dan pengulangan suara untuk menciptakan kedalaman, dimensi, dan atmosfer.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">💿</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Mastering & Loudness</h3>
+                    <p class="text-sm text-gray-400">Tahap akhir: normalisasi loudness sesuai standar platform (-14 LUFS untuk YouTube, -24 LUFS untuk TV broadcast).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simulator Audio Mixer -->
+        <section id="simulator" class="bg-gradient-to-br from-luxury-800 to-luxury-900 rounded-2xl p-8 border border-luxury-gold/20">
+            <h2 class="font-serif text-2xl font-bold text-white mb-2 flex items-center gap-3">
+                <span class="text-3xl">🎛️</span> Simulator Audio Mixer
+            </h2>
+            <p class="text-gray-400 text-sm mb-6">Geser fader untuk mengatur level setiap channel. Amati bagaimana level meter bereaksi. Klik preset untuk melihat berbagai skenario mixing profesional.</p>
+
+            <!-- Waveform Display -->
+            <div class="waveform-display mb-6" id="waveformDisplay">
+                <!-- Waveform bars akan di-generate via JS -->
+            </div>
+
+            <!-- Mixer Console -->
+            <div class="mixer-console">
+                <div class="grid grid-cols-4 gap-3 md:gap-4">
+                    <!-- Channel 1: Dialog -->
+                    <div class="mixer-channel">
+                        <div class="channel-label">🎤 DIALOG</div>
+                        <div class="flex gap-1">
+                            <button class="mute-btn" onclick="toggleMute(0)">M</button>
+                            <button class="solo-btn" onclick="toggleSolo(0)">S</button>
+                        </div>
+                        <div class="level-meter">
+                            <div class="level-fill" id="level0" style="height: 70%;"></div>
+                            <div class="level-marks">
+                                <div class="level-mark"></div>
+                                <div class="level-mark"></div>
+                                <div class="level-mark"></div>
+                                <div class="level-mark"></div>
+                                <div class="level-mark"></div>
+                            </div>
+                        </div>
+                        <div class="fader-track">
+                            <div class="fader-knob" id="fader0" style="bottom: 70%;"></div>
+                        </div>
+                        <div class="fader-value" id="value0">-6 dB</div>
+                    </div>
+
+                    <!-- Channel 2: SFX -->
+                    <div class="mixer-channel">
+                        <div class="channel-label">💥 SFX</div>
+                        <div class="flex gap-1">
+                            <button class="mute-btn" onclick="toggleMute(1)">M</button>
+                            <button class="solo-btn" onclick="toggleSolo(1)">S</button>
+                        </div>
+                        <div class="level-meter">
+                            <div class="level-fill" id="level1" style="height: 45%;"></div>
+                            <div class="level-marks">
+                                <div class="level-mark"></div>
+                                <div class="level-mark"></div>
+                                <div class="level-mark"></div>
+                                <div class="level-mark"></div>
+                                <div class="level-mark"></div>
+                            </div>
+                        </div>
+                        <div class="fader-track">
+                            <div class="fader-knob" id="fader1" style="bottom: 45%;"></div>
+                        </div>
+                        <div class="fader-value" id="value1">-18 dB</div>
+                    </div>
+
+                    <!-- Channel 3: Music -->
+                    <div class="mixer-channel">
+                        <div class="channel-label">🎵 MUSIC</div>
+                        <div class="flex gap-1">
+                            <button class="mute-btn" onclick="toggleMute(2)">M</button>
+                            <button class="solo-btn" onclick="toggleSolo(2)">S</button>
+                        </div>
+                        <div class="level-meter">
+                            <div class="level-fill" id="level2" style="height: 35%;"></div>
+                            <div class="level-marks">
+                                <div class="level-mark"></div>
+                                <div class="level-mark"></div>
+                                <div class="level-mark"></div>
+                                <div class="level-mark"></div>
+                                <div class="level-mark"></div>
+                            </div>
+                        </div>
+                        <div class="fader-track">
+                            <div class="fader-knob" id="fader2" style="bottom: 35%;"></div>
+                        </div>
+                        <div class="fader-value" id="value2">-24 dB</div>
+                    </div>
+
+                    <!-- Channel 4: Master -->
+                    <div class="mixer-channel" style="border: 1px solid rgba(212, 175, 55, 0.5);">
+                        <div class="channel-label" style="color: #F3E5AB;">🔊 MASTER</div>
+                        <div class="flex gap-1">
+                            <button class="mute-btn" onclick="toggleMute(3)">M</button>
+                            <button class="solo-btn" onclick="toggleSolo(3)">S</button>
+                        </div>
+                        <div class="level-meter">
+                            <div class="level-fill" id="level3" style="height: 60%;"></div>
+                            <div class="level-marks">
+                                <div class="level-mark"></div>
+                                <div class="level-mark"></div>
+                                <div class="level-mark"></div>
+                                <div class="level-mark"></div>
+                                <div class="level-mark"></div>
+                            </div>
+                        </div>
+                        <div class="fader-track">
+                            <div class="fader-knob" id="fader3" style="bottom: 60%;"></div>
+                        </div>
+                        <div class="fader-value" id="value3">-14 LUFS</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kontrol Preset -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-6">
+                <button onclick="setPreset('balanced')" class="mixer-preset-btn active bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">⚖️ Balanced Mix</button>
+                <button onclick="setPreset('dialog')" class="mixer-preset-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🎤 Dialog Heavy</button>
+                <button onclick="setPreset('music')" class="mixer-preset-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🎵 Music Heavy</button>
+                <button onclick="setPreset('bad')" class="mixer-preset-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">⚠️ Bad Mix</button>
+            </div>
+
+            <!-- Info -->
+            <div class="bg-luxury-900 p-4 rounded-lg border border-luxury-gold/20 mt-6">
+                <p class="text-sm font-bold text-luxury-gold mb-1" id="presetTitle">⚖️ Balanced Mix (Standar Profesional)</p>
+                <p class="text-xs text-gray-400" id="presetDesc">Dialog di -6 dB (dominan), SFX di -18 dB (pendukung), Music di -24 dB (latar). Master output di -14 LUFS sesuai standar YouTube. Ini adalah setting paling umum untuk video YouTube, dokumenter, dan konten edukasi.</p>
+            </div>
+        </section>
+
+        <!-- Visualisasi EQ -->
+        <section class="bg-luxury-800 rounded-2xl p-8 border border-luxury-gold/10">
+            <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">📊 Visualisasi Equalization (EQ)</h3>
+            <p class="text-sm text-gray-400 mb-6">EQ mengatur keseimbangan frekuensi audio. Setiap rentang frekuensi memiliki karakter suara yang berbeda:</p>
+            
+            <div class="eq-canvas">
+                <!-- Grid Lines -->
+                <div class="eq-grid-line horizontal" style="top: 25%;"></div>
+                <div class="eq-grid-line horizontal" style="top: 50%;"></div>
+                <div class="eq-grid-line horizontal" style="top: 75%;"></div>
+                <div class="eq-grid-line vertical" style="left: 16.6%;"></div>
+                <div class="eq-grid-line vertical" style="left: 33.3%;"></div>
+                <div class="eq-grid-line vertical" style="left: 50%;"></div>
+                <div class="eq-grid-line vertical" style="left: 66.6%;"></div>
+                <div class="eq-grid-line vertical" style="left: 83.3%;"></div>
+
+                <!-- Frequency Labels -->
+                <div class="eq-label" style="bottom: 4px; left: 4%;">60 Hz<br><span style="color:#D4AF37;">Sub Bass</span></div>
+                <div class="eq-label" style="bottom: 4px; left: 20%;">250 Hz<br><span style="color:#D4AF37;">Bass</span></div>
+                <div class="eq-label" style="bottom: 4px; left: 38%;">1 kHz<br><span style="color:#D4AF37;">Low Mid</span></div>
+                <div class="eq-label" style="bottom: 4px; left: 55%;">4 kHz<br><span style="color:#D4AF37;">Presence</span></div>
+                <div class="eq-label" style="bottom: 4px; left: 73%;">8 kHz<br><span style="color:#D4AF37;">Brilliance</span></div>
+                <div class="eq-label" style="bottom: 4px; right: 4%;">20 kHz<br><span style="color:#D4AF37;">Air</span></div>
+
+                <!-- dB Labels -->
+                <div class="eq-label" style="top: 4px; left: 4px;">+12 dB</div>
+                <div class="eq-label" style="top: 48%; left: 4px;">0 dB</div>
+                <div class="eq-label" style="bottom: 24px; left: 4px;">-12 dB</div>
+
+                <!-- EQ Curve SVG -->
+                <svg class="eq-curve" viewBox="0 0 300 100" preserveAspectRatio="none">
+                    <path d="M 0 50 Q 25 55, 50 50 T 100 45 T 150 35 T 200 40 T 250 50 T 300 55" 
+                          fill="none" stroke="#D4AF37" stroke-width="2"/>
+                    <path d="M 0 50 Q 25 55, 50 50 T 100 45 T 150 35 T 200 40 T 250 50 T 300 55 L 300 100 L 0 100 Z" 
+                          fill="rgba(212, 175, 55, 0.1)"/>
+                </svg>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4 mt-6">
+                <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                    <p class="text-sm font-bold text-white mb-2">🎤 EQ untuk Dialog</p>
+                    <ul class="text-xs text-gray-400 space-y-1 ml-4 list-disc list-inside">
+                        <li><strong>High-pass 80 Hz:</strong> Buang rumble & AC hum</li>
+                        <li><strong>Cut 200-400 Hz:</strong> Kurangi "mud" (suara sengau)</li>
+                        <li><strong>Boost 2-5 kHz:</strong> Tingkatkan kejelasan artikulasi</li>
+                        <li><strong>Boost 10+ kHz:</strong> Tambahkan "air" dan crispness</li>
+                    </ul>
+                </div>
+                <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                    <p class="text-sm font-bold text-white mb-2">🎵 EQ untuk Musik Latar</p>
+                    <ul class="text-xs text-gray-400 space-y-1 ml-4 list-disc list-inside">
+                        <li><strong>High-pass 150 Hz:</strong> Beri ruang untuk bass dialog</li>
+                        <li><strong>Cut 1-4 kHz:</strong> "Duck" frekuensi dialog agar vokal terdengar jelas</li>
+                        <li><strong>Low-pass 12 kHz:</strong> Kurangi brilliance agar tidak bersaing</li>
+                        <li><strong>Prinsip:</strong> Musik adalah PENDUKUNG, bukan bintang utama</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Studi Kasus -->
+        <section class="bg-red-900/10 border border-red-500/20 rounded-2xl p-8">
+            <h3 class="font-serif text-xl font-bold text-red-400 mb-4 flex items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                📖 Studi Kasus: Video yang "Tenggelam" oleh Musik
+            </h3>
+            <p class="text-gray-300 mb-4">
+                Seorang siswa DKV membuat video dokumenter berdurasi 8 menit tentang kegiatan sekolah. Ia menggunakan musik latar EDM yang sangat energetik dengan volume yang sama kerasnya dengan dialog narasumber. Saat ditonton, penonton tidak bisa memahami apa yang dikatakan narasumber karena musik "menelan" suara dialog. Guru yang menonton harus menggunakan earphone dan memutar ulang beberapa kali untuk memahami isi video.
+            </p>
+            <div class="bg-luxury-900/50 p-4 rounded-lg border-l-2 border-red-500">
+                <p class="text-sm text-gray-300"><strong class="text-red-400">Pembelajaran:</strong> (1) Dialog harus selalu menjadi elemen audio paling dominan (-6 dB hingga -12 dB). (2) Musik latar seharusnya 12-18 dB lebih pelan dari dialog. (3) Gunakan teknik <em>"ducking"</em> — otomatis menurunkan volume musik saat dialog berbicara. (4) EQ musik untuk "mengosongkan" frekuensi dialog (1-4 kHz) sehingga vokal tetap terdengar jelas meski musik bermain. (5) Prinsip emas: <em class="text-luxury-gold">"Jika penonton harus berusaha mendengar, Anda sudah gagal."</em></p>
+            </div>
+        </section>
+
+        <!-- Refleksi -->
+        <section class="bg-luxury-800 rounded-2xl p-8 border border-luxury-gold/10">
+            <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">💭 Refleksi untuk Siswa DKV</h3>
+            <p class="text-gray-300 leading-relaxed">
+                Di SMKN 1 Koto Balingka, Anda mungkin mengedit menggunakan software gratis seperti Audacity, DaVinci Resolve (Fairlight), atau Adobe Premiere Pro. Semua tools audio profesional yang dibahas di pertemuan ini — EQ, Compression, Noise Reduction, Reverb — tersedia di software-software tersebut. Mulailah dengan proyek sederhana: rekam voice-over 1 menit, lalu terapkan noise reduction, EQ, compression, dan mastering. Rasakan perbedaannya sebelum dan setelah processing. Ingat: <em class="text-luxury-gold">"Audio yang buruk akan menghancurkan video yang bagus, tetapi audio yang baik bisa menyelamatkan video yang biasa."</em>
+            </p>
+        </section>
+
+        <!-- Detail Materi -->
+        <section class="space-y-8">
+            <h2 class="font-serif text-2xl font-bold text-white border-b border-luxury-gold/20 pb-2">Uraian Materi Lengkap</h2>
+            
+            <div class="space-y-8">
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">1. Audio Post-Production Workflow</h3>
+                    <p class="text-gray-300 mb-3">Alur kerja audio pasca-produksi yang profesional terdiri dari 5 tahap berurutan:</p>
+                    <ol class="list-decimal list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Dialog Editing:</strong> Memilih take terbaik, menyelaraskan dialog, menghapus noise mulut (click, lip smack, napas berlebihan).</li>
+                        <li><strong>Audio Cleaning:</strong> Menghilangkan noise latar (AC hum, wind noise, traffic) menggunakan noise reduction tools.</li>
+                        <li><strong>Sound Design / Foley:</strong> Menambahkan efek suara (SFX) dan foley untuk memperkuat visual.</li>
+                        <li><strong>Music Editing:</strong> Memilih, memotong, dan mengatur musik latar sesuai pacing scene.</li>
+                        <li><strong>Mixing & Mastering:</strong> Menyeimbangkan semua elemen, menerapkan efek, dan normalisasi loudness akhir.</li>
+                    </ol>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">2. Audio Cleaning: Menghilangkan Noise</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🧹 Noise Reduction</h4>
+                            <p class="text-sm text-gray-300 mb-2">Algoritma yang menganalisis "sample noise" (bagian audio yang hanya berisi noise) lalu menghilangkannya dari seluruh rekaman.</p>
+                            <p class="text-xs text-gray-400"><strong>Tools:</strong> Adobe Audition Noise Reduction, iZotope RX, Audacity Noise Removal.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎯 De-Esser</h4>
+                            <p class="text-sm text-gray-300 mb-2">Mengurangi suara "S", "Sh", "Ch" yang terlalu tajam (sibilance) pada vokal.</p>
+                            <p class="text-xs text-gray-400"><strong>Target:</strong> Frekuensi 5-9 kHz. Penting untuk vokal yang terdengar natural.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🔇 De-Click / De-Crackle</h4>
+                            <p class="text-sm text-gray-300 mb-2">Menghilangkan suara klik, pop, atau crackle dari rekaman (biasanya dari mikrofon murah atau kabel rusak).</p>
+                            <p class="text-xs text-gray-400"><strong>Tools:</strong> iZotope RX De-Click, Audacity Click Removal.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📡 De-Hum</h4>
+                            <p class="text-sm text-gray-300 mb-2">Menghilangkan dengung listrik (50/60 Hz hum) dari kabel atau peralatan elektronik.</p>
+                            <p class="text-xs text-gray-400"><strong>Tools:</strong> Notch filter pada 50/60 Hz, iZotope RX De-Hum.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">3. Equalization (EQ)</h3>
+                    <p class="text-gray-300 mb-3">EQ adalah alat paling fundamental dalam mixing. Ia mengatur keseimbangan frekuensi audio:</p>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Sub Bass (20-60 Hz):</strong> Getaran fisik, ledakan, gempa. Sering di-cut untuk dialog agar tidak "mendem".</li>
+                        <li><strong>Bass (60-250 Hz):</strong> Kedarahan suara, kehangatan. Untuk vokal, biasanya di-cut sedikit untuk mengurangi "mud".</li>
+                        <li><strong>Low Mid (250-500 Hz):</strong> "Body" suara. Terlalu banyak = suara "boxy" atau "hollow".</li>
+                        <li><strong>Mid (500 Hz - 2 kHz):</strong> Kejelasan vokal. Area paling sensitif untuk telinga manusia.</li>
+                        <li><strong>High Mid (2-4 kHz):</strong> "Presence" dan artikulasi. Boost di area ini membuat vokal terdengar "dekat".</li>
+                        <li><strong>Brilliance (4-10 kHz):</strong> Kecerahan, detail, "crispness".</li>
+                        <li><strong>Air (10-20 kHz):</strong> "Openness", kemewahan, detail halus.</li>
+                    </ul>
+                    <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/20 mt-3">
+                        <p class="text-sm text-gray-300"><strong class="text-luxury-gold">Prinsip EQ:</strong> "Cut narrow, boost wide" — lebih baik memotong frekuensi problematik secara sempit daripada menambahkan frekuensi baru secara lebar. Kurangi dulu yang buruk, baru tambahkan yang baik.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">4. Dynamics: Compression & Limiting</h3>
+                    <div class="space-y-4">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📊 Compressor</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>Fungsi:</strong> Meredam suara yang terlalu keras, mengangkat suara yang terlalu pelan → membuat level konsisten.</li>
+                                <li><strong>Threshold:</strong> Level di mana compressor mulai bekerja (misal: -20 dB).</li>
+                                <li><strong>Ratio:</strong> Seberapa kuat kompresi. 2:1 = ringan (vokal), 4:1 = sedang, 10:1+ = berat (limiting).</li>
+                                <li><strong>Attack:</strong> Seberapa cepat compressor bereaksi. Cepat (1-5 ms) untuk transien, lambat (20-50 ms) untuk vokal natural.</li>
+                                <li><strong>Release:</strong> Seberapa cepat compressor berhenti bekerja. 100-300 ms untuk vokal.</li>
+                                <li><strong>Use:</strong> Wajib untuk dialog agar volume konsisten dari awal hingga akhir.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🚧 Limiter</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>Fungsi:</strong> Compressor dengan ratio sangat tinggi (∞:1) — mencegah audio melewati ceiling tertentu.</li>
+                                <li><strong>Ceiling:</strong> Biasanya -1 dBFS untuk digital audio (memberi "headroom" agar tidak clipping).</li>
+                                <li><strong>Use:</strong> Tahap akhir mastering untuk memastikan audio tidak pernah clipping.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">5. Spatial Effects: Reverb & Delay</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🏛️ Reverb (Gema)</h4>
+                            <p class="text-sm text-gray-300 mb-2">Simulasi akustik ruangan — membuat audio terdengar seperti direkam di ruang tertentu.</p>
+                            <ul class="text-xs text-gray-400 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>Room:</strong> Ruangan kecil (kamar, studio)</li>
+                                <li><strong>Hall:</strong> Aula besar, konser</li>
+                                <li><strong>Plate:</strong> Metalik, vintage (vokal 80an)</li>
+                                <li><strong>Spring:</strong> Retro, surf rock</li>
+                                <li><strong>Prinsip:</strong> Dialog biasanya MINIM reverb agar terdengar "dekat" dan intim.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🔁 Delay (Echo)</h4>
+                            <p class="text-sm text-gray-300 mb-2">Pengulangan suara dengan interval waktu tertentu.</p>
+                            <ul class="text-xs text-gray-400 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>Slap Delay:</strong> Echo pendek (50-100 ms) — efek rockabilly</li>
+                                <li><strong>Dotted Eighth:</strong> Delay berirama — populer di musik</li>
+                                <li><strong>Ping-Pong:</strong> Delay memantul kiri-kanan</li>
+                                <li><strong>Use:</strong> Jarang untuk dialog, sering untuk musik dan efek kreatif.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">6. Audio Mixing: Level Standards</h3>
+                    <p class="text-gray-300 mb-3">Level ideal setiap elemen audio dalam mix video profesional:</p>
+                    <div class="bg-luxury-900/50 p-5 rounded-lg border border-luxury-gold/20">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-luxury-gold border-b border-luxury-gold/20">
+                                    <th class="text-left py-2">Elemen</th>
+                                    <th class="text-left py-2">Level Ideal</th>
+                                    <th class="text-left py-2">Fungsi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-300">
+                                <tr class="border-b border-luxury-gold/10">
+                                    <td class="py-2">🎤 Dialog</td>
+                                    <td class="py-2 font-mono text-luxury-gold">-12 dB hingga -6 dB</td>
+                                    <td class="py-2">Element PALING DOMINAN — harus selalu terdengar jelas</td>
+                                </tr>
+                                <tr class="border-b border-luxury-gold/10">
+                                    <td class="py-2">💥 Sound Effect (SFX)</td>
+                                    <td class="py-2 font-mono text-luxury-gold">-18 dB hingga -12 dB</td>
+                                    <td class="py-2">Pendukung visual — tidak boleh menelan dialog</td>
+                                </tr>
+                                <tr class="border-b border-luxury-gold/10">
+                                    <td class="py-2">🎵 Music (Background)</td>
+                                    <td class="py-2 font-mono text-luxury-gold">-24 dB hingga -18 dB</td>
+                                    <td class="py-2">Emosi & atmosfer — paling pelan saat dialog ada</td>
+                                </tr>
+                                <tr class="border-b border-luxury-gold/10">
+                                    <td class="py-2">🎵 Music (Montage/No Dialog)</td>
+                                    <td class="py-2 font-mono text-luxury-gold">-12 dB hingga -6 dB</td>
+                                    <td class="py-2">Bisa lebih keras saat tidak ada dialog</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2">🔊 Master Output</td>
+                                    <td class="py-2 font-mono text-luxury-gold">-1 dBFS peak max</td>
+                                    <td class="py-2">Tidak boleh clipping (melebihi 0 dBFS)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">7. Loudness Standards per Platform</h3>
+                    <p class="text-gray-300 mb-3">Setiap platform memiliki standar loudness berbeda. Audio yang di-master untuk YouTube akan terdengar berbeda jika diputar di TV broadcast:</p>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">📺 YouTube & Media Sosial</p>
+                            <p class="text-xs text-gray-400"><strong>Target:</strong> -14 LUFS (integrated)<br><strong>True Peak:</strong> -1 dBTP<br><strong>Format:</strong> AAC 320 kbps atau WAV</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">📡 TV Broadcast</p>
+                            <p class="text-xs text-gray-400"><strong>Target:</strong> -24 LUFS (ATSC A/85) atau -23 LUFS (EBU R128)<br><strong>True Peak:</strong> -2 dBTP<br><strong>Format:</strong> PCM 48 kHz / 24-bit</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🎬 Bioskop (Cinema)</p>
+                            <p class="text-xs text-gray-400"><strong>Target:</strong> -22 LUFS (dial level 85 dB SPL)<br><strong>True Peak:</strong> N/A (analog chain)<br><strong>Format:</strong> PCM 48 kHz / 24-bit, 5.1 surround</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🎧 Spotify / Streaming Musik</p>
+                            <p class="text-xs text-gray-400"><strong>Target:</strong> -14 LUFS (Spotify normal)<br><strong>True Peak:</strong> -1 dBTP<br><strong>Format:</strong> WAV/FLAC untuk upload, AAC untuk streaming</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">8. Teknik Mixing Lanjutan</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Sidechain Compression / Ducking:</strong> Musik otomatis mengecil saat dialog berbicara. Standar di podcast, YouTube, dan broadcast.</li>
+                        <li><strong>Automation:</strong> Mengubah level, pan, atau efek secara dinamis sepanjang timeline — misalnya musik naik perlahan di akhir scene.</li>
+                        <li><strong>Panning:</strong> Menempatkan audio di stereo field (kiri-kanan). Dialog selalu di CENTER, SFX bisa di-pan untuk imersi.</li>
+                        <li><strong>EQ Subtractive:</strong> Memotong frekuensi problematik sebelum boost — "kurangi yang buruk dulu, baru tambahkan yang baik".</li>
+                        <li><strong>Parallel Compression:</strong> Menggabungkan sinyal kering dan terkompresi — mempertahankan dinamika natural sambil menambah "punch".</li>
+                        <li><strong>Mid-Side Processing:</strong> Memproses bagian tengah (mono) dan samping (stereo) secara terpisah — berguna untuk melebarkan musik tanpa mengganggu dialog center.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">9. Audio Mastering & Export</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Final Limiter:</strong> Menerapkan limiter di master bus dengan ceiling -1 dBTP untuk mencegah clipping.</li>
+                        <li><strong>Loudness Metering:</strong> Menggunakan LUFS meter untuk memastikan audio memenuhi standar platform target.</li>
+                        <li><strong>Dithering:</strong> Menambahkan noise acak saat konversi bit depth (24-bit → 16-bit) untuk mencegah artefak kuantisasi.</li>
+                        <li><strong>Format Export:</strong>
+                            <ul class="list-circle list-inside ml-6 mt-1 text-gray-400">
+                                <li><strong>WAV / AIFF (Lossless):</strong> Untuk arsip dan mastering.</li>
+                                <li><strong>MP3 (320 kbps):</strong> Untuk distribusi umum.</li>
+                                <li><strong>AAC (256-320 kbps):</strong> Untuk YouTube, podcast, streaming.</li>
+                                <li><strong>FLAC (Lossless):</strong> Untuk audiophile dan arsip berkualitas.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Quality Control:</strong> Mendengarkan hasil mastering di berbagai perangkat (studio monitor, earphone, speaker HP, TV) untuk memastikan konsistensi.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">10. Software Audio Post-Production</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🎚️ Adobe Audition</p>
+                            <p class="text-xs text-gray-400">Standar industri audio post. Fitur spectral editing, noise reduction terbaik, integrasi dengan Premiere Pro.</p>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🎨 DaVinci Resolve (Fairlight)</p>
+                            <p class="text-xs text-gray-400">DAW full-featured terintegrasi dalam Resolve. Versi gratis sangat powerful untuk mixing video.</p>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🆓 Audacity</p>
+                            <p class="text-xs text-gray-400">Gratis, open-source. Cocok untuk podcast dan audio editing dasar. Plugin VST didukung.</p>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🔧 iZotope RX</p>
+                            <p class="text-xs text-gray-400">Standar industri audio repair. Tools terbaik untuk noise reduction, de-clip, de-reverb, dialogue isolate.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tips Praktis -->
+        <section class="bg-gradient-to-r from-luxury-gold/10 to-transparent p-6 rounded-xl border-l-4 border-luxury-gold">
+            <h3 class="font-bold text-white mb-3">💡 Tips Praktis Audio Mixing & Mastering</h3>
+            <ul class="space-y-2 text-sm text-gray-300">
+                <li>✅ Selalu mix dengan <em>headphone studio</em> atau <em>studio monitor</em> — speaker laptop/HP tidak akurat untuk mixing.</li>
+                <li>✅ Dengarkan di volume rendah — jika dialog masih terdengar jelas di volume rendah, mix Anda bagus.</li>
+                <li>✅ Gunakan reference track — bandingkan mix Anda dengan video profesional yang Anda kagumi.</li>
+                <li>✅ Selalu high-pass filter dialog di 80 Hz — buang rumble yang tidak terdengar tapi memakan headroom.</li>
+                <li>✅ Terapkan compression pada dialog (ratio 2:1 - 3:1) untuk level yang konsisten.</li>
+                <li>✅ Gunakan sidechain ducking agar musik otomatis mengecil saat dialog berbicara.</li>
+                <li>✅ Cek hasil final di berbagai perangkat: earphone, speaker HP, TV, mobil — pastikan konsisten.</li>
+                <li>✅ Jangan pernah biarkan audio clipping (melebihi 0 dBFS) — distorsi digital tidak bisa diperbaiki.</li>
+                <li>✅ Target -14 LUFS untuk YouTube, -24 LUFS untuk TV broadcast.</li>
+                <li>✅ Render final di WAV 48 kHz / 24-bit untuk arsip, lalu konversi ke AAC untuk distribusi.</li>
+            </ul>
+        </section>
+
+        <!-- Kesimpulan & Daftar Pustaka -->
+        <section class="border-t border-luxury-gold/10 pt-8">
+            <h3 class="font-serif text-xl font-bold text-white mb-4">Kesimpulan</h3>
+            <p class="text-gray-300 mb-6">
+                Audio mixing dan mastering adalah tahap akhir yang menentukan apakah karya audiovisual Anda terdengar "amatir" atau "profesional". Dengan menguasai audio cleaning, EQ, compression, reverb, level balancing, dan loudness normalization, siswa DKV memiliki kemampuan yang setara dengan sound engineer profesional. Ingatlah tiga prinsip emas audio post-production: <strong class="text-luxury-gold">(1) Dialog adalah raja — selalu prioritaskan kejelasan vokal.</strong> <strong class="text-luxury-gold">(2) Less is more — lebih baik subtle dan natural daripada berlebihan.</strong> <strong class="text-luxury-gold">(3) Listen on multiple systems — mix yang baik harus terdengar bagus di mana saja.</strong>
+            </p>
+            <h3 class="font-serif text-lg font-bold text-luxury-gold mb-3">📚 Daftar Pustaka</h3>
+            <ul class="text-sm text-gray-400 space-y-1 list-disc list-inside">
+                <li>Holman, T. (2010). <em>Sound for Film and Television</em> (3rd ed.). Burlington: Focal Press.</li>
+                <li>Izhaki, R. (2017). <em>Mixing Audio: Concepts, Practices, and Tools</em> (3rd ed.). New York: Routledge.</li>
+                <li>Rose, J. (2014). <em>The Location Sound Bible</em>. New York: Focal Press.</li>
+                <li>Supriadi. (2024). <em>Produksi Multimedia untuk SMK DKV</em>. Bukittinggi: FTIK UIN Bukittinggi.</li>
+                <li>Wright, W. (2019). <em>Video Editing: A Postproduction Timeline for Film and Video</em>. New York: Allworth Press.</li>
+            </ul>
+        </section>
+
+    </main>
+
+    <!-- UJI FORMATIF -->
+    <section id="uji-formatif" class="bg-luxury-800 py-16 border-t border-luxury-gold/20">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="text-center mb-10">
+                <h2 class="font-serif text-3xl font-bold text-white mb-2">📋 Uji Formatif Pertemuan 13</h2>
+                <p class="text-gray-400">Materi: Audio Cleaning, EQ, Compression, Mixing, Mastering, dan Loudness Standards</p>
+                <p class="text-sm text-red-400 mt-2 font-semibold">⚠️ Mohon lengkapi semua data dan jawaban terlebih dahulu!</p>
+            </div>
+
+            <form id="quizForm" class="glass rounded-2xl p-6 md:p-10 space-y-8 quiz-container max-h-[800px] overflow-y-auto">
+                
+                <!-- Data Siswa -->
+                <div class="space-y-4 border-b border-luxury-gold/20 pb-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">📋 Data Siswa</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Nama Lengkap</label>
+                            <input type="text" id="nama" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* NIS</label>
+                            <input type="text" id="nis" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Tanggal</label>
+                            <input type="date" id="tanggal" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Kelas</label>
+                            <select id="kelas" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                                <option value="">Pilih Kelas</option>
+                                <option value="XII DKV 1">XII DKV 1</option>
+                                <option value="XII DKV 2">XII DKV 2</option>
+                                <option value="XII DKV 3">XII DKV 3</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian A: Pilihan Ganda -->
+                <div class="space-y-6 border-b border-luxury-gold/20 pb-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">📋 Bagian A – Pilihan Ganda (Skor 10/soal)</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">1. Proses menghilangkan noise latar (AC hum, wind noise) dari rekaman dialog disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="a" class="accent-luxury-gold"> a. Audio Mastering</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="b" class="accent-luxury-gold"> b. Audio Cleaning / Noise Reduction</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="c" class="accent-luxury-gold"> c. Audio Mixing</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="d" class="accent-luxury-gold"> d. Foley Recording</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">2. Alat audio yang digunakan untuk mengatur keseimbangan frekuensi (bass, mid, treble) disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="a" class="accent-luxury-gold"> a. Compressor</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="b" class="accent-luxury-gold"> b. Reverb</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="c" class="accent-luxury-gold"> c. Equalizer (EQ)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="d" class="accent-luxury-gold"> d. Limiter</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">3. Level ideal untuk dialog dalam mix video profesional adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="a" class="accent-luxury-gold"> a. -30 dB hingga -24 dB</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="b" class="accent-luxury-gold"> b. -12 dB hingga -6 dB</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="c" class="accent-luxury-gold"> c. 0 dB hingga +3 dB</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="d" class="accent-luxury-gold"> d. +6 dB hingga +12 dB</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">4. Standar loudness untuk YouTube dan media sosial adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="a" class="accent-luxury-gold"> a. -24 LUFS</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="b" class="accent-luxury-gold"> b. -14 LUFS</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4"

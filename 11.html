@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pertemuan 11: Transisi, Efek Dasar, dan Titling</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        luxury: {
+                            900: '#0B0F19',
+                            800: '#151B2B',
+                            700: '#1E293B',
+                            gold: '#D4AF37',
+                            goldLight: '#F3E5AB',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(21, 27, 43, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #D4AF37 0%, #F3E5AB 50%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hover-lift {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px -5px rgba(212, 175, 55, 0.15);
+        }
+        .quiz-container::-webkit-scrollbar { width: 8px; }
+        .quiz-container::-webkit-scrollbar-track { background: #151B2B; }
+        .quiz-container::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 4px; }
+
+        /* Transition Simulator */
+        .transition-stage {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid rgba(212, 175, 55, 0.3);
+        }
+        .clip-layer {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            transition: all 0.8s ease;
+        }
+        .clip-a {
+            background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
+        }
+        .clip-b {
+            background: linear-gradient(135deg, #EC4899 0%, #BE185D 100%);
+        }
+        .clip-overlay {
+            position: absolute;
+            inset: 0;
+            background: #000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+        }
+        .clip-wipe {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            background: linear-gradient(135deg, #EC4899 0%, #BE185D 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            transition: width 0.8s ease;
+            overflow: hidden;
+        }
+        .clip-iris {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #EC4899 0%, #BE185D 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            clip-path: circle(0% at 50% 50%);
+            transition: clip-path 0.8s ease;
+        }
+        .clip-zoom-out {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            transition: transform 0.8s ease, opacity 0.8s ease;
+        }
+        .clip-zoom-in {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #EC4899 0%, #BE185D 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            transform: scale(0);
+            opacity: 0;
+            transition: transform 0.8s ease, opacity 0.8s ease;
+        }
+
+        /* Transition states */
+        .stage-hard .clip-a { opacity: 0; }
+        .stage-hard .clip-b { opacity: 1; }
+
+        .stage-dissolve .clip-a { opacity: 0; }
+        .stage-dissolve .clip-b { opacity: 1; }
+
+        .stage-fade .clip-overlay { opacity: 1; }
+        .stage-fade .clip-a { opacity: 0; }
+        .stage-fade .clip-b { opacity: 1; }
+
+        .stage-wipe .clip-wipe { width: 100%; }
+
+        .stage-iris .clip-iris { clip-path: circle(100% at 50% 50%); }
+
+        .stage-zoom .clip-zoom-out { transform: scale(0); opacity: 0; }
+        .stage-zoom .clip-zoom-in { transform: scale(1); opacity: 1; }
+
+        .trans-btn {
+            transition: all 0.2s ease;
+        }
+        .trans-btn.active {
+            background: #D4AF37 !important;
+            color: #0B0F19 !important;
+            border-color: #D4AF37 !important;
+        }
+
+        /* Titling Demo */
+        .titling-demo {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: linear-gradient(135deg, #1E293B 0%, #0B0F19 100%);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        .title-main {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: bold;
+            color: #D4AF37;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        }
+        .title-subtitle {
+            position: absolute;
+            top: 65%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #F3E5AB;
+            letter-spacing: 2px;
+        }
+        .lower-third {
+            position: absolute;
+            bottom: 10%;
+            left: 5%;
+            background: linear-gradient(90deg, rgba(212, 175, 55, 0.9) 0%, rgba(212, 175, 55, 0.7) 70%, transparent 100%);
+            padding: 8px 16px;
+            border-radius: 4px;
+            color: #0B0F19;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .lower-third-role {
+            font-size: 10px;
+            font-weight: normal;
+            opacity: 0.8;
+        }
+        .subtitle-bar {
+            position: absolute;
+            bottom: 5%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 6px 16px;
+            border-radius: 4px;
+            color: white;
+            font-size: 11px;
+            text-align: center;
+        }
+        .credit-roll {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #D4AF37;
+            font-family: 'Playfair Display', serif;
+            font-size: 14px;
+            text-align: center;
+            line-height: 2;
+        }
+    </style>
+</head>
+<body class="bg-luxury-900 text-gray-200 font-sans antialiased selection:bg-luxury-gold selection:text-luxury-900">
+
+    <!-- Navigasi -->
+    <nav class="fixed w-full z-50 glass border-b border-luxury-gold/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <a href="index.html" class="font-serif text-lg font-semibold text-white tracking-wide hover:text-luxury-gold transition">
+                        ← Kembali ke Beranda
+                    </a>
+                </div>
+                <div class="hidden md:flex space-x-6 text-sm font-medium">
+                    <a href="#materi" class="hover:text-luxury-gold transition">Materi</a>
+                    <a href="#simulator" class="hover:text-luxury-gold transition">Simulator</a>
+                    <a href="#uji-formatif" class="px-4 py-2 bg-luxury-gold text-luxury-900 font-bold rounded-full hover:bg-yellow-400 transition">Uji Formatif</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Materi -->
+    <header class="pt-32 pb-16 bg-gradient-to-b from-luxury-800 to-luxury-900 border-b border-luxury-gold/10">
+        <div class="max-w-5xl mx-auto px-4 text-center">
+            <span class="inline-block px-4 py-1 rounded-full border border-luxury-gold/30 bg-luxury-gold/10 text-luxury-gold text-xs font-bold tracking-widest uppercase mb-4">
+                Pertemuan 11 dari 16
+            </span>
+            <h1 class="font-serif text-4xl md:text-5xl font-bold text-white mb-6">
+                Transisi, Efek Dasar, <br><span class="gold-gradient-text">& Seni Titling</span>
+            </h1>
+            <p class="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
+                Menyempurnakan fine cut dengan transisi yang bermakna, efek visual dasar yang memperkuat narasi, serta titling profesional yang memberikan identitas dan informasi pada karya audiovisual Anda.
+            </p>
+            <div class="mt-8 flex justify-center gap-4">
+                <a href="10.html" class="text-sm text-gray-400 hover:text-luxury-gold transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    Bab Sebelumnya
+                </a>
+                <span class="text-gray-600">|</span>
+                <a href="12.html" class="text-sm text-luxury-gold hover:text-white transition flex items-center gap-2 font-semibold">
+                    Bab Selanjutnya: Color Grading
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Konten Utama -->
+    <main id="materi" class="max-w-5xl mx-auto px-4 py-16 space-y-16">
+
+        <!-- Pendahuluan -->
+        <section class="glass rounded-2xl p-8 md:p-10 border-l-4 border-luxury-gold">
+            <h2 class="font-serif text-2xl font-bold text-white mb-4">Pendahuluan</h2>
+            <p class="text-gray-300 leading-relaxed mb-4">
+                Setelah menguasai fine cut dan continuity, saatnya menambahkan "bumbu" yang membuat video Anda terasa hidup dan profesional: <strong class="text-luxury-gold">transisi</strong>, <strong class="text-luxury-gold">efek visual</strong>, dan <strong class="text-luxury-gold">titling</strong>. Namun hati-hati — ketiganya adalah pisau bermata dua. Digunakan dengan bijak, mereka memperkuat cerita. Disalahgunakan, mereka akan menghancurkan kredibilitas karya Anda.
+            </p>
+            <p class="text-gray-300 leading-relaxed">
+                Ada pepatah di kalangan editor profesional: <em class="text-luxury-gold">"The best transition is the one you don't notice."</em> (Transisi terbaik adalah yang tidak Anda sadari). Pertemuan ini akan mengajarkan Anda filosofi tersebut — kapan harus menggunakan transisi, efek, dan teks, dan kapan harus menahan diri demi kekuatan narasi.
+            </p>
+        </section>
+
+        <!-- Konsep Kunci -->
+        <section>
+            <h2 class="font-serif text-2xl font-bold text-luxury-gold mb-6 flex items-center gap-3">
+                <span class="text-3xl">🔑</span> Konsep Kunci
+            </h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">⚡</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Jenis Transisi</h3>
+                    <p class="text-sm text-gray-400">Hard cut, dissolve, fade, wipe, iris, zoom — masing-masing memiliki makna emosional dan konteks penggunaan yang berbeda.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🎭</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Efek Dasar</h3>
+                    <p class="text-sm text-gray-400">Slow motion, fast motion, time-lapse, freeze frame, speed ramp — alat untuk memanipulasi waktu dan menekankan momen penting.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">📝</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Title & Opening</h3>
+                    <p class="text-sm text-gray-400">Judul utama yang memberikan identitas karya, menciptakan first impression yang kuat bagi penonton.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🏷️</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Lower Third</h3>
+                    <p class="text-sm text-gray-400">Grafis informasi di sepertiga bawah frame — menampilkan nama narasumber, lokasi, atau konteks penting.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">💬</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Subtitle & Caption</h3>
+                    <p class="text-sm text-gray-400">Teks terjemahan atau transkrip dialog untuk aksesibilitas dan jangkauan audiens yang lebih luas.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🎬</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Credit Roll</h3>
+                    <p class="text-sm text-gray-400">Daftar kru dan kontributor di akhir video — bentuk apresiasi dan standar profesional industri.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simulator Transisi Video -->
+        <section id="simulator" class="bg-gradient-to-br from-luxury-800 to-luxury-900 rounded-2xl p-8 border border-luxury-gold/20">
+            <h2 class="font-serif text-2xl font-bold text-white mb-2 flex items-center gap-3">
+                <span class="text-3xl">🎛️</span> Simulator Transisi Video
+            </h2>
+            <p class="text-gray-400 text-sm mb-6">Pilih jenis transisi untuk melihat animasi perpindahan dari Klip A (biru) ke Klip B (pink). Klik tombol "Play Transisi" untuk melihat animasinya.</p>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Stage Visual -->
+                <div>
+                    <div class="transition-stage" id="transStage">
+                        <!-- Clip A -->
+                        <div class="clip-layer clip-a" id="clipA">🎬 A</div>
+                        <!-- Clip B -->
+                        <div class="clip-layer clip-b" id="clipB" style="opacity: 0;">🎬 B</div>
+                        <!-- Fade Overlay -->
+                        <div class="clip-overlay" id="fadeOverlay"></div>
+                        <!-- Wipe -->
+                        <div class="clip-wipe" id="wipeLayer">🎬 B</div>
+                        <!-- Iris -->
+                        <div class="clip-iris" id="irisLayer">🎬 B</div>
+                        <!-- Zoom Out -->
+                        <div class="clip-zoom-out" id="zoomOut">🎬 A</div>
+                        <!-- Zoom In -->
+                        <div class="clip-zoom-in" id="zoomIn">🎬 B</div>
+                    </div>
+                    <button onclick="playTransition()" class="w-full mt-4 bg-luxury-gold text-luxury-900 font-bold py-3 rounded-lg hover:bg-yellow-400 transition">▶️ Play Transisi</button>
+                    <button onclick="resetStage()" class="w-full mt-2 bg-luxury-700 text-white text-sm py-2 rounded-lg hover:bg-luxury-600 transition">🔄 Reset ke Klip A</button>
+                </div>
+
+                <!-- Kontrol -->
+                <div class="space-y-4">
+                    <p class="text-sm font-bold text-luxury-gold">Pilih Jenis Transisi:</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setTransition('hard')" class="trans-btn active bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">⚡ Hard Cut</button>
+                        <button onclick="setTransition('dissolve')" class="trans-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🌫️ Dissolve</button>
+                        <button onclick="setTransition('fade')" class="trans-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">⬛ Fade to Black</button>
+                        <button onclick="setTransition('wipe')" class="trans-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">📏 Wipe</button>
+                        <button onclick="setTransition('iris')" class="trans-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🎯 Iris</button>
+                        <button onclick="setTransition('zoom')" class="trans-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🔍 Zoom</button>
+                    </div>
+
+                    <div class="bg-luxury-900 p-4 rounded-lg border border-luxury-gold/20">
+                        <p class="text-sm font-bold text-luxury-gold mb-1" id="transTitle">⚡ Hard Cut</p>
+                        <p class="text-xs text-gray-400 mb-2" id="transDesc">Potongan langsung tanpa efek peralihan. Transisi paling dasar, paling sering digunakan, dan paling "tidak terlihat". Memberikan kesan tegas, energetik, dan realisme.</p>
+                        <div class="text-xs text-gray-500 border-t border-luxury-gold/10 pt-2 mt-2">
+                            <p class="font-bold text-gray-300 mb-1">💡 Penggunaan Ideal:</p>
+                            <p id="transUsage">Dialog, adegan aksi, perpindahan scene yang tegas, cutting on action. Gunakan 90% dari total transisi dalam video profesional.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Visualisasi Jenis-Jenis Titling -->
+        <section class="bg-luxury-800 rounded-2xl p-8 border border-luxury-gold/10">
+            <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">📝 Visualisasi Jenis-Jenis Titling</h3>
+            <p class="text-sm text-gray-400 mb-6">Berikut adalah contoh visual dari berbagai elemen teks yang umum digunakan dalam produksi video profesional:</p>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-xs text-gray-500 mb-2 uppercase tracking-wider">Main Title & Subtitle</p>
+                    <div class="titling-demo">
+                        <div class="title-main">AUDIO VIDIO</div>
+                        <div class="title-subtitle">XII DKV GANJIL • 2026</div>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-2 uppercase tracking-wider">Lower Third (Nama Narasumber)</p>
+                    <div class="titling-demo">
+                        <div style="position:absolute; top:20%; left:10%; color:#9CA3AF; font-size:11px;">[ Footage Wawancara ]</div>
+                        <div class="lower-third">
+                            AUSI ANGGINA, S.Pd
+                            <div class="lower-third-role">Guru Produktif DKV</div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-2 uppercase tracking-wider">Subtitle / Caption</p>
+                    <div class="titling-demo">
+                        <div style="position:absolute; top:20%; left:10%; color:#9CA3AF; font-size:11px;">[ Footage Dialog ]</div>
+                        <div class="subtitle-bar">"Produksi video yang baik dimulai dari perencanaan yang matang."</div>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-2 uppercase tracking-wider">Credit Roll (Akhir)</p>
+                    <div class="titling-demo">
+                        <div class="credit-roll">
+                            <div style="font-size:10px; opacity:0.7;">DIPRODUKSI OLEH</div>
+                            <div style="font-size:16px;">SMKN 1 KOTO BALINGKA</div>
+                            <div style="font-size:10px; opacity:0.7; margin-top:12px;">DITULIS OLEH</div>
+                            <div style="font-size:14px;">AUSI ANGGINA, S.Pd</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Studi Kasus -->
+        <section class="bg-red-900/10 border border-red-500/20 rounded-2xl p-8">
+            <h3 class="font-serif text-xl font-bold text-red-400 mb-4 flex items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                📖 Studi Kasus: "Pesta Transisi" yang Menghancurkan Video
+            </h3>
+            <p class="text-gray-300 mb-4">
+                Seorang siswa DKV membuat video dokumenter berdurasi 5 menit tentang kegiatan sekolah. Karena baru belajar menggunakan software editing, ia menggunakan SEMUA transisi yang tersedia: star wipe di setiap perpindahan scene, dissolve di setiap kutipan, page peel di setiap foto, dan zoom transition di setiap B-roll. Hasilnya? Video terlihat seperti presentasi PowerPoint tahun 2003 — amatir, memusingkan, dan tidak serius. Guru yang menonton langsung memberikan nilai rendah meskipun konten informasinya bagus.
+            </p>
+            <div class="bg-luxury-900/50 p-4 rounded-lg border-l-2 border-red-500">
+                <p class="text-sm text-gray-300"><strong class="text-red-400">Pembelajaran:</strong> (1) Transisi adalah alat, bukan hiasan — gunakan hanya ketika ada alasan naratif. (2) Dalam 90% kasus, hard cut adalah pilihan terbaik. (3) Dissolve hanya untuk menunjukkan waktu berlalu atau hubungan emosional. (4) Wipe, iris, dan efek "gimmick" lainnya hampir tidak pernah digunakan di produksi profesional modern kecuali untuk gaya retro/komedi tertentu. (5) Less is more — semakin sedikit transisi fancy, semakin profesional video Anda terlihat.</p>
+            </div>
+        </section>
+
+        <!-- Refleksi -->
+        <section class="bg-luxury-800 rounded-2xl p-8 border border-luxury-gold/10">
+            <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">💭 Refleksi untuk Siswa DKV</h3>
+            <p class="text-gray-300 leading-relaxed">
+                Di SMKN 1 Koto Balingka, Anda mungkin menggunakan software seperti CapCut, Premiere Pro, atau DaVinci Resolve yang menyediakan ratusan transisi "siap pakai". Godaan untuk menggunakannya semua sangat besar. Namun, ingatlah: editor profesional Hollywood dengan akses ke ribuan efek canggih justru paling sering menggunakan hard cut. Mengapa? Karena mereka paham bahwa <em class="text-luxury-gold">cerita adalah raja</em>, dan transisi hanyalah pelayan yang tak boleh mencuri perhatian dari cerita itu sendiri. Latihlah "selera editing" Anda dengan menonton film-film terbaik dan amati betapa minimnya transisi yang mereka gunakan.
+            </p>
+        </section>
+
+        <!-- Detail Materi -->
+        <section class="space-y-8">
+            <h2 class="font-serif text-2xl font-bold text-white border-b border-luxury-gold/20 pb-2">Uraian Materi Lengkap</h2>
+            
+            <div class="space-y-8">
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">1. Jenis-Jenis Transisi Video</h3>
+                    <p class="text-gray-300 mb-3">Transisi adalah perpindahan dari satu shot/klip ke shot/klip lainnya. Setiap jenis memiliki makna dan konteks penggunaan:</p>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">⚡ Hard Cut (Cut Langsung)</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li>Perpindahan instan dari shot A ke shot B tanpa efek peralihan.</li>
+                                <li><strong>Makna:</strong> Tegas, energetik, realisme, kontinuitas waktu.</li>
+                                <li><strong>Penggunaan:</strong> 90% dari semua transisi dalam film profesional. Dialog, aksi, dokumenter.</li>
+                                <li><strong>Prinsip:</strong> "Invisible cut" — penonton tidak boleh menyadari adanya potongan.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🌫️ Dissolve (Cross Fade)</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li>Shot A memudar perlahan sementara shot B muncul secara bersamaan (overlap).</li>
+                                <li><strong>Makna:</strong> Waktu berlalu, hubungan emosional, mimpi, kenangan, koneksi antar ide.</li>
+                                <li><strong>Penggunaan:</strong> Montase perjalanan waktu, transisi antar lokasi yang berkaitan secara tematik.</li>
+                                <li><strong>Peringatan:</strong> Jangan gunakan terlalu sering — akan terasa melodramatis.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">⬛ Fade to Black / Fade from Black</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li>Shot memudar hingga hitam (fade out), atau muncul dari hitam (fade in).</li>
+                                <li><strong>Makna:</strong> Akhir bab, jeda waktu yang panjang, kematian, penutupan emosional.</li>
+                                <li><strong>Penggunaan:</strong> Akhir scene/akta, opening setelah title, momen dramatis.</li>
+                                <li><strong>Catatan:</strong> Fade to white biasanya untuk mimpi/kenangan/flashback.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📏 Wipe</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li>Shot B "mengusap" masuk dari satu sisi layar, menggantikan shot A.</li>
+                                <li><strong>Makna:</strong> Perpindahan lokasi yang eksplisit, gaya retro, komedi.</li>
+                                <li><strong>Penggunaan:</strong> Star Wars (famous wipe), video komedi, gaya vintage.</li>
+                                <li><strong>Peringatan:</strong> Sangat jarang digunakan di film serius modern — akan terlihat "murahan" jika salah konteks.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎯 Iris (Iris In/Out)</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li>Lingkaran yang membesar (iris in) atau mengecil (iris out) untuk mengungkap/menutup shot.</li>
+                                <li><strong>Makna:</strong> Gaya film bisu, kartun, "the end", fokus perhatian.</li>
+                                <li><strong>Penggunaan:</strong> Parodi, gaya retro, kartun Looney Tunes, ending klasik "That's all folks!".</li>
+                                <li><strong>Peringatan:</strong> Hampir tidak pernah digunakan di produksi serius.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🔍 Zoom Transition</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li>Kamera "zoom in" ke shot A, lalu "zoom out" dari shot B.</li>
+                                <li><strong>Makna:</strong> Energetik, dinamis, modern, transisi cepat.</li>
+                                <li><strong>Penggunaan:</strong> Video musik, travel vlog, konten media sosial, montase cepat.</li>
+                                <li><strong>Peringatan:</strong> Terlalu banyak akan membuat penonton pusing. Gunakan dengan hemat.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">2. Efek Visual Dasar</h3>
+                    <p class="text-gray-300 mb-3">Efek visual memungkinkan editor memanipulasi waktu dan ruang untuk memperkuat narasi:</p>
+                    
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🐌 Slow Motion</h4>
+                            <p class="text-sm text-gray-300 mb-2">Memperlambat gerakan (biasanya 50% atau 25% kecepatan normal).</p>
+                            <p class="text-xs text-gray-400"><strong>Use:</strong> Menekankan momen emosional, aksi dramatis, detail visual. Harus direkam di frame rate tinggi (60/120 fps) agar halus.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">⏩ Fast Motion / Time-Lapse</h4>
+                            <p class="text-sm text-gray-300 mb-2">Mempercepat gerakan (2x, 4x, atau lebih).</p>
+                            <p class="text-xs text-gray-400"><strong>Use:</strong> Menunjukkan waktu berlalu, proses pembangunan, perjalanan panjang, komedi.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">⏸️ Freeze Frame</h4>
+                            <p class="text-sm text-gray-300 mb-2">Membekukan satu frame menjadi gambar diam.</p>
+                            <p class="text-xs text-gray-400"><strong>Use:</strong> Menekankan momen penting, closing shot, efek komedi, intro karakter.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎢 Speed Ramp</h4>
+                            <p class="text-sm text-gray-300 mb-2">Perubahan kecepatan dalam satu shot (slow → fast → slow).</p>
+                            <p class="text-xs text-gray-400"><strong>Use:</strong> Video musik, aksi sinematik, highlight olahraga. Membutuhkan footage frame rate tinggi.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🔄 Reverse</h4>
+                            <p class="text-sm text-gray-300 mb-2">Memutar footage secara mundur.</p>
+                            <p class="text-xs text-gray-400"><strong>Use:</strong> Efek kreatif, video musik, momen surealis, "undo" dramatis.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📐 Crop & Reframe</h4>
+                            <p class="text-sm text-gray-300 mb-2">Memotong frame untuk mengubah komposisi atau membuat "shot baru" dari footage yang ada.</p>
+                            <p class="text-xs text-gray-400"><strong>Use:</strong> Memperbaiki komposisi, membuat CU dari WS, mengubah aspect ratio.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">3. Titling (Penambahan Teks)</h3>
+                    <p class="text-gray-300 mb-3">Teks dalam video berfungsi memberikan informasi, identitas, dan konteks. Setiap jenis titling memiliki fungsi spesifik:</p>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎬 Main Title / Opening Title</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li>Judul utama video/film yang muncul di awal.</li>
+                                <li>Memberikan identitas dan first impression.</li>
+                                <li>Desain harus mencerminkan tone karya (serius, komedi, horor, dll).</li>
+                                <li>Biasanya disertai nama pembuat, produksi, atau studio.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🏷️ Lower Third</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li>Grafis teks di sepertiga bawah frame.</li>
+                                <li>Biasanya menampilkan: nama narasumber + jabatan/instansi, lokasi kejadian, tanggal, atau informasi kontekstual.</li>
+                                <li>Standar di: berita TV, dokumenter, wawancara, video korporat.</li>
+                                <li>Harus mudah dibaca, tidak mengganggu visual, dan konsisten desainnya.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">💬 Subtitle / Caption</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li>Teks terjemahan atau transkrip dialog di bagian bawah layar.</li>
+                                <li><strong>Open Subtitle:</strong> "Dibakar" ke dalam video (selalu terlihat).</li>
+                                <li><strong>Closed Subtitle (CC):</strong> Bisa dihidupkan/dimatikan oleh penonton (YouTube, Netflix).</li>
+                                <li>Penting untuk aksesibilitas (tuna rungu) dan jangkauan internasional.</li>
+                                <li>Di media sosial, caption wajib karena 85% penonton menonton tanpa suara.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📜 Credit Roll / End Credit</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li>Daftar seluruh kru dan kontributor di akhir video.</li>
+                                <li>Urutan standar: Sutradara → Produser → Writer → Cast → Crew teknis → Musik → Special Thanks.</li>
+                                <li>Bentuk apresiasi profesional dan etika industri.</li>
+                                <li>Untuk video pendek sekolah: minimal cantumkan nama pembuat, sekolah, tahun.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📍 Call-Out / Annotation</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li>Teks yang menunjuk ke elemen spesifik dalam frame untuk menjelaskan.</li>
+                                <li>Biasanya dengan garis, panah, atau highlight.</li>
+                                <li>Populer di: tutorial, video edukasi, review produk, dokumenter teknis.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">4. Motion Graphics Dasar</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Animasi Teks:</strong> Keyframe untuk posisi, skala, rotasi, opacity — membuat teks "hidup" dengan gerakan masuk/keluar yang elegan.</li>
+                        <li><strong>Track Matte:</strong> Menggunakan bentuk atau teks sebagai "jendela" untuk menampilkan video di dalamnya.</li>
+                        <li><strong>Kinetic Typography:</strong> Teks yang bergerak mengikuti irama audio — populer di video lirik, iklan, intro.</li>
+                        <li><strong>Infografis Animasi:</strong> Data dan angka yang muncul dengan animasi untuk video edukasi/dokumenter.</li>
+                        <li><strong>Logo Animation:</strong> Menghidupkan logo perusahaan/brand dengan motion yang sesuai identitas.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">5. Prinsip Desain Titling Profesional</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Keterbacaan (Readability):</strong> Teks harus mudah dibaca di semua ukuran layar. Hindari font terlalu tipis atau dekoratif berlebihan.</li>
+                        <li><strong>Kontras:</strong> Pastikan teks kontras dengan latar belakang. Gunakan drop shadow, outline, atau background box jika perlu.</li>
+                        <li><strong>Konsistensi:</strong> Gunakan maksimal 2-3 jenis font dalam satu video. Pertahankan style yang sama untuk lower third, title, subtitle.</li>
+                        <li><strong>Hirarki Visual:</strong> Judul utama lebih besar dari subtitle, subtitle lebih besar dari credit. Gunakan ukuran dan ketebalan untuk menunjukkan hierarki.</li>
+                        <li><strong>Safe Area:</strong> Tempatkan teks di "title safe area" (90% dari frame) agar tidak terpotong di layar TV atau perangkat berbeda.</li>
+                        <li><strong>Durasi Cukup:</strong> Berikan waktu cukup bagi penonton untuk membaca. Rumus praktis: jumlah kata ÷ 3 = detik minimum di layar.</li>
+                        <li><strong>Hak Cipta Font:</strong> Pastikan font yang digunakan berlisensi untuk penggunaan komersial (jika video dipublikasi secara publik).</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">6. Kesalahan Umum yang Harus Dihindari</h3>
+                    <div class="bg-red-900/10 border border-red-500/20 rounded-xl p-5">
+                        <ul class="text-sm text-gray-300 space-y-2 ml-4 list-disc list-inside">
+                            <li>❌ Menggunakan terlalu banyak jenis transisi dalam satu video ("pesta transisi").</li>
+                            <li>❌ Font dekoratif yang sulit dibaca (script, gothic, graffiti) untuk body text.</li>
+                            <li>❌ Teks terlalu kecil atau terlalu lama di layar.</li>
+                            <li>❌ Lower third menutupi wajah narasumber atau elemen penting visual.</li>
+                            <li>❌ Animasi teks berlebihan yang mengganggu (bounce, spin, shake tanpa tujuan).</li>
+                            <li>❌ Typo pada teks — selalu proofread sebelum rendering final!</li>
+                            <li>❌ Menggunakan font bajakan yang berisiko hukum saat video dipublikasi.</li>
+                            <li>❌ Slow motion dari footage 24/30 fps — akan terlihat patah-patah (frame duplication).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tips Praktis -->
+        <section class="bg-gradient-to-r from-luxury-gold/10 to-transparent p-6 rounded-xl border-l-4 border-luxury-gold">
+            <h3 class="font-bold text-white mb-3">💡 Tips Praktis Transisi, Efek & Titling</h3>
+            <ul class="space-y-2 text-sm text-gray-300">
+                <li>✅ Gunakan <em>hard cut</em> sebagai transisi default — hanya gunakan transisi lain jika ada alasan naratif yang kuat.</li>
+                <li>✅ Buat template lower third dan title sendiri yang konsisten untuk semua video Anda — ini membangun identitas visual.</li>
+                <li>✅ Untuk slow motion yang halus, rekam di 60 fps atau 120 fps sejak awal di tahap produksi.</li>
+                <li>✅ Gunakan font sans-serif (Inter, Roboto, Montserrat) untuk body text — lebih mudah dibaca di layar kecil.</li>
+                <li>✅ Selalu cek teks di layar HP — apa yang terlihat bagus di monitor bisa terlalu kecil di smartphone.</li>
+                <li>✅ Simpan preset animasi teks favorit Anda sebagai template untuk digunakan di proyek berikutnya.</li>
+                <li>✅ Untuk subtitle, gunakan format SRT yang kompatibel dengan semua platform (YouTube, Instagram, TikTok).</li>
+                <li>✅ Proofread minimal 2x sebelum rendering final — typo di video final sangat memalukan dan sulit diperbaiki.</li>
+            </ul>
+        </section>
+
+        <!-- Kesimpulan & Daftar Pustaka -->
+        <section class="border-t border-luxury-gold/10 pt-8">
+            <h3 class="font-serif text-xl font-bold text-white mb-4">Kesimpulan</h3>
+            <p class="text-gray-300 mb-6">
+                Transisi, efek visual, dan titling adalah alat penyempurna yang dapat mengangkat kualitas video dari level amatir ke profesional — atau sebaliknya, menghancurkannya jika disalahgunakan. Kunci utamanya adalah <strong class="text-luxury-gold">restraint</strong> (pengendalian diri): gunakan hanya ketika melayani cerita, pertahankan konsistensi visual, dan utamakan keterbacaan serta profesionalisme. Editor hebat bukan yang paling banyak menggunakan efek, melainkan yang paling tahu kapan harus <em>tidak</em> menggunakannya. Ingat filosofi emas industri: <strong class="text-luxury-gold">"Less is more, and story is king."</strong>
+            </p>
+            <h3 class="font-serif text-lg font-bold text-luxury-gold mb-3">📚 Daftar Pustaka</h3>
+            <ul class="text-sm text-gray-400 space-y-1 list-disc list-inside">
+                <li>Brown, B. (2013). <em>The Filmmaker's Handbook: A Comprehensive Guide for the Digital Age</em>. New York: Plume.</li>
+                <li>Dancyger, K. (2013). <em>The Technique of Film and Video Editing</em> (5th ed.). Burlington: Focal Press.</li>
+                <li>Antonini, P. (2016). <em>Motion Graphics Design: Using New Digital Applications to Create Dynamic Brand Experiences</em>. New York: Allworth Press.</li>
+                <li>Supriadi. (2024). <em>Produksi Multimedia untuk SMK DKV</em>. Bukittinggi: FTIK UIN Bukittinggi.</li>
+                <li>Wright, W. (2019). <em>Video Editing: A Postproduction Timeline for Film and Video</em>. New York: Allworth Press.</li>
+            </ul>
+        </section>
+
+    </main>
+
+    <!-- UJI FORMATIF -->
+    <section id="uji-formatif" class="bg-luxury-800 py-16 border-t border-luxury-gold/20">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="text-center mb-10">
+                <h2 class="font-serif text-3xl font-bold text-white mb-2">📋 Uji Formatif Pertemuan 11</h2>
+                <p class="text-gray-400">Materi: Transisi Video, Efek Dasar, Titling, dan Motion Graphics</p>
+                <p class="text-sm text-red-400 mt-2 font-semibold">⚠️ Mohon lengkapi semua data dan jawaban terlebih dahulu!</p>
+            </div>
+
+            <form id="quizForm" class="glass rounded-2xl p-6 md:p-10 space-y-8 quiz-container max-h-[800px] overflow-y-auto">
+                
+                <!-- Data Siswa -->
+                <div class="space-y-4 border-b border-luxury-gold/20 pb-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">📋 Data Siswa</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Nama Lengkap</label>
+                            <input type="text" id="nama" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* NIS</label>
+                            <input type="text" id="nis" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Tanggal</label>
+                            <input type="date" id="tanggal" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Kelas</label>
+                            <select id="kelas" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                                <option value="">Pilih Kelas</option>
+                                <option value="XII DKV 1">XII DKV 1</option>
+                                <option value="XII DKV 2">XII DKV 2</option>
+                                <option value="XII DKV 3">XII DKV 3</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian A: Pilihan Ganda -->
+                <div class="space-y-6 border-b border-luxury-gold/20 pb-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">📋 Bagian A – Pilihan Ganda (Skor 10/soal)</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">1. Transisi yang paling dasar, paling sering digunakan, dan paling "tidak terlihat" oleh penonton dalam film profesional adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="a" class="accent-luxury-gold"> a. Dissolve</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="b" class="accent-luxury-gold"> b. Hard Cut</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="c" class="accent-luxury-gold"> c. Wipe</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="d" class="accent-luxury-gold"> d. Iris</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">2. Transisi di mana shot A memudar perlahan sementara shot B muncul secara bersamaan (overlap) disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="a" class="accent-luxury-gold"> a. Fade to Black</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="b" class="accent-luxury-gold"> b. Wipe</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="c" class="accent-luxury-gold"> c. Dissolve</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="d" class="accent-luxury-gold"> d. Zoom Transition</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">3. Transisi "Fade to Black" biasanya digunakan untuk menunjukkan...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="a" class="accent-luxury-gold"> a. Aksi yang cepat dan energetik</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="b" class="accent-luxury-gold"> b. Akhir bab, jeda waktu panjang, atau penutupan emosional</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="c" class="accent-luxury-gold"> c. Perpindahan lokasi yang eksplisit</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="d" class="accent-luxury-gold"> d. Transisi komedi</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">4. Grafis teks yang ditempatkan di sepertiga bawah frame untuk menampilkan nama narasumber atau informasi kontekstual disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="a" class="accent-luxury-gold"> a. Main Title</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="b" class="accent-luxury-gold"> b. Credit Roll</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="c" class="accent-luxury-gold"> c. Lower Third</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="d" class="accent-luxury-gold"> d. Subtitle</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">5. Efek visual yang memperlambat gerakan untuk menekankan momen emosional atau dramatis disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="a" class="accent-luxury-gold"> a. Time-Lapse</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="b" class="accent-luxury-gold"> b. Slow Motion</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="c" class="accent-luxury-gold"> c. Freeze Frame</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="d" class="accent-luxury-gold"> d. Reverse</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">6. Agar slow motion terlihat halus dan tidak patah-patah, footage harus direkam pada...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="a" class="accent-luxury-gold"> a. 24 fps</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="b" class="accent-luxury-gold"> b. 30 fps</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="c" class="accent-luxury-gold"> c. 60 fps atau 120 fps</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="d" class="accent-luxury-gold"> d. 15 fps</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">7. Teks terjemahan atau transkrip dialog di bagian bawah layar yang penting untuk aksesibilitas dan media sosial disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="a" class="accent-luxury-gold"> a. Lower Third</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="b" class="accent-luxury-gold"> b. Main Title</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="c" class="accent-luxury-gold"> c. Subtitle / Caption</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="d" class="accent-luxury-gold"> d. Credit Roll</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">8. Area aman dalam frame untuk menempatkan teks agar tidak terpotong di berbagai perangkat disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="a" class="accent-luxury-gold"> a. Rule of Thirds</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="b" class="accent-luxury-gold"> b. Title Safe Area</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="c" class="accent-luxury-gold"> c. Headroom</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="d" class="accent-luxury-gold"> d. Lookroom</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">9. Perubahan kecepatan dalam satu shot (slow → fast → slow) yang populer di video musik dan aksi sinematik disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="a" class="accent-luxury-gold"> a. Time-Lapse</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="b" class="accent-luxury-gold"> b. Speed Ramp</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="c" class="accent-luxury-gold"> c. Reverse</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="d" class="accent-luxury-gold"> d. Freeze Frame</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">10. Prinsip desain titling yang menyatakan bahwa teks harus mudah dibaca di semua ukuran layar disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="a" class="accent-luxury-gold"> a. Konsistensi</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="b" class="accent-luxury-gold"> b. Hirarki Visual</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="c" class="accent-luxury-gold"> c. Keterbacaan (Readability)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="d" class="accent-luxury-gold"> d. Kontras</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian B: Essay -->
+                <div class="space-y-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">✍️ Bagian B – Essay (Skor 20/soal)</h3>
+                    <p class="text-sm text-gray-400">Jawablah pertanyaan berikut dengan jelas dan terstruktur.</p>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">1. Jelaskan perbedaan antara 6 jenis transisi video (Hard Cut, Dissolve, Fade to Black, Wipe, Iris, Zoom) beserta makna emosional dan konteks penggunaan masing-masing!</p>
+                            <textarea name="essay1" rows="4" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">2. Mengapa editor profesional lebih sering menggunakan Hard Cut (90% dari total transisi) dibandingkan transisi fancy lainnya? Jelaskan filosofi "invisible cut" dan berikan contoh penerapannya!</p>
+                            <textarea name="essay2" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">3. Deskripsikan 5 jenis efek visual dasar (Slow Motion, Fast Motion/Time-Lapse, Freeze Frame, Speed Ramp, Reverse) beserta fungsi naratif dan persyaratan teknis masing-masing!</p>
+                            <textarea name="essay3" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">4. Jelaskan 5 jenis titling (Main Title, Lower Third, Subtitle, Credit Roll, Call-Out) beserta fungsi spesifik dan contoh penggunaannya dalam produksi video!</p>
+                            <textarea name="essay4" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">5. Berdasarkan studi kasus "Pesta Transisi" di atas, analisis kesalahan yang dilakukan siswa tersebut dan rancanglah pendekatan editing yang lebih profesional untuk video dokumenter sekolah berdurasi 5 menit!</p>
+                            <textarea name="essay5" rows="4" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi -->
+                <div class="pt-6 border-t border-luxury-gold/20 space-y-4">
+                    <button type="button" onclick="hitungNilai()" class="w-full bg-luxury-gold text-luxury-900 font-bold py-3 rounded-lg hover:bg-yellow-400 transition shadow-lg">
+                        ✉️ KIRIM JAWABAN & LIHAT HASIL
+                    </button>
+                    
+                    <div id="hasilNilai" class="hidden bg-luxury-900 p-6 rounded-xl border border-luxury-gold/30 text-center space-y-4">
+                        <h4 class="text-xl font-bold text-white">📊 Hasil Uji Formatif</h4>
+                        <div class="text-4xl font-serif font-bold text-luxury-gold" id="skorTotal">0</div>
+                        <p class="text-sm text-gray-400" id="detailSkor">Bagian A (PG): 0/100 | Bagian B (Essay): Dinilai Manual oleh Guru</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-4">
+                            <button type="button" onclick="alert('Simulasi: File PDF lengkap sedang diunduh...')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">📥 UNDUH PDF LENGKAP</button>
+                            <button type="button" onclick="alert('Simulasi: File skor sedang diunduh...')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">📊 UNDUH SKOR SAJA</button>
+                            <button type="button" onclick="alert('Simulasi: Email telah dikirim ke ausianggina@gmail.com')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">✉️ KIRIM EMAIL GURU</button>
+                        </div>
+                        <button type="button" onclick="location.reload()" class="text-sm text-gray-400 hover:text-white underline mt-4">🔄 MULAI ULANG</button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-luxury-900 border-t border-luxury-gold/10 py-8 text-center">
+        <p class="text-gray-500 text-sm">© 2026 AUSI ANGGINA, S.Pd — SMKN 1 KOTO BALINGKA. All rights reserved.</p>
+    </footer>
+
+    <!-- Script Simulator & Uji Formatif -->
+    <script>
+        // === SIMULATOR TRANSISI ===
+        const transitions = {
+            hard: {
+                title: '⚡ Hard Cut',
+                desc: 'Potongan langsung tanpa efek peralihan. Transisi paling dasar, paling sering digunakan, dan paling "tidak terlihat". Memberikan kesan tegas, energetik, dan realisme.',
+                usage: 'Dialog, adegan aksi, perpindahan scene yang tegas, cutting on action. Gunakan 90% dari total transisi dalam video profesional.'
+            },
+            dissolve: {
+                title: '🌫️ Dissolve (Cross Fade)',
+                desc: 'Shot A memudar perlahan sementara shot B muncul secara bersamaan. Menciptakan kesan lembut, puitis, dan menghubungkan dua momen secara emosional.',
+                usage: 'Montase perjalanan waktu, transisi antar lokasi yang berkaitan secara tematik, adegan mimpi/kenangan. Gunakan dengan hemat.'
+            },
+            fade: {
+                title: '⬛ Fade to Black',
+                desc: 'Shot memudar hingga hitam, lalu shot baru muncul dari hitam. Memberikan kesan penutupan, jeda waktu yang signifikan, atau akhir bab.',
+                usage: 'Akhir scene/akta, opening setelah title, momen kematian, penutupan emosional. Fade to white biasanya untuk mimpi/flashback.'
+            },
+            wipe: {
+                title: '📏 Wipe',
+                desc: 'Shot B "mengusap" masuk dari satu sisi layar, menggantikan shot A. Sangat eksplisit dan terlihat — memberikan kesan gaya retro atau komedi.',
+                usage: 'Star Wars (famous wipe), video komedi, gaya vintage. Hampir tidak pernah digunakan di film serius modern.'
+            },
+            iris: {
+                title: '🎯 Iris (Iris In/Out)',
+                desc: 'Lingkaran yang membesar (iris in) atau mengecil (iris out) untuk mengungkap/menutup shot. Sangat retro — mengingatkan pada film bisu dan kartun klasik.',
+                usage: 'Parodi, gaya retro, kartun Looney Tunes, ending klasik "That\'s all folks!". Tidak cocok untuk produksi serius.'
+            },
+            zoom: {
+                title: '🔍 Zoom Transition',
+                desc: 'Kamera "zoom in" ke shot A, lalu "zoom out" dari shot B. Energetik, dinamis, dan modern — populer di konten media sosial.',
+                usage: 'Video musik, travel vlog, konten media sosial, montase cepat. Terlalu banyak akan membuat penonton pusing — gunakan dengan hemat.'
+            }
+        };
+
+        let currentTransition = 'hard';
+
+        function setTransition(type) {
+            currentTransition = type;
+            const trans = transitions[type];
+            
+            document.getElementById('transTitle').innerText = trans.title;
+            document.getElementById('transDesc').innerText = trans.desc;
+            document.getElementById('transUsage').innerText = trans.usage;
+
+            // Update active button
+            document.querySelectorAll('.trans-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Reset stage
+            resetStage();
+        }
+
+        function resetStage() {
+            const stage = document.getElementById('transStage');
+            stage.className = 'transition-stage';
+            
+            // Reset all layers
+            document.getElementById('clipA').style.opacity = '1';
+            document.getElementById('clipB').style.opacity = '0';
+            document.getElementById('fadeOverlay').style.opacity = '0';
+            document.getElementById('wipeLayer').style.width = '0';
+            document.getElementById('irisLayer').style.clipPath = 'circle(0% at 50% 50%)';
+            document.getElementById('zoomOut').style.transform = 'scale(1)';
+            document.getElementById('zoomOut').style.opacity = '1';
+            document.getElementById('zoomIn').style.transform = 'scale(0)';
+            document.getElementById('zoomIn').style.opacity = '0';
+        }
+
+        function playTransition() {
+            const stage = document.getElementById('transStage');
+            
+            // Reset first
+            resetStage();
+            
+            // Apply transition after brief delay
+            setTimeout(() => {
+                switch(currentTransition) {
+                    case 'hard':
+                        stage.classList.add('stage-hard');
+                        break;
+                    case 'dissolve':
+                        stage.classList.add('stage-dissolve');
+                        break;
+                    case 'fade':
+                        stage.classList.add('stage-fade');
+                        break;
+                    case 'wipe':
+                        stage.classList.add('stage-wipe');
+                        break;
+                    case 'iris':
+                        stage.classList.add('stage-iris');
+                        break;
+                    case 'zoom':
+                        stage.classList.add('stage-zoom');
+                        break;
+                }
+            }, 300);
+        }
+
+        // === UJI FORMATIF ===
+        function hitungNilai() {
+            const nama = document.getElementById('nama').value;
+            const nis = document.getElementById('nis').value;
+            const tanggal = document.getElementById('tanggal').value;
+            const kelas = document.getElementById('kelas').value;
+
+            if (!nama || !nis || !tanggal || !kelas) {
+                alert("⚠️ Mohon lengkapi semua Data Siswa terlebih dahulu!");
+                return;
+            }
+
+            const kunciJawaban = {
+                q1: 'b',  // Hard Cut
+                q2: 'c',  // Dissolve
+                q3: 'b',  // Akhir bab, jeda waktu panjang, penutupan emosional
+                q4: 'c',  // Lower Third
+                q5: 'b',  // Slow Motion
+                q6: 'c',  // 60 fps atau 120 fps
+                q7: 'c',  // Subtitle / Caption
+                q8: 'b',  // Title Safe Area
+                q9: 'b',  // Speed Ramp
+                q10: 'c'  // Keterbacaan (Readability)
+            };
+
+            let skorPG = 0;
+            let terjawab = 0;
+
+            for (let i = 1; i <= 10; i++) {
+                const jawaban = document.querySelector(`input[name="q${i}"]:checked`);
+                if (jawaban) {
+                    terjawab++;
+                    if (jawaban.value === kunciJawaban[`q${i}`]) {
+                        skorPG += 10;
+                    }
+                }
+            }
+
+            if (terjawab < 10) {
+                alert(`⚠️ Mohon lengkapi semua 10 soal pilihan ganda terlebih dahulu! (Baru terjawab ${terjawab})`);
+                return;
+            }
+
+            let essayKosong = false;
+            for (let i = 1; i <= 5; i++) {
+                if (document.querySelector(`textarea[name="essay${i}"]`).value.trim() === "") {
+                    essayKosong = true;
+                    break;
+                }
+            }
+
+            if (essayKosong) {
+                alert("⚠️ Mohon isi semua 5 soal essay terlebih dahulu!");
+                return;
+            }
+
+            document.getElementById('skorTotal').innerText = skorPG;
+            document.getElementById('detailSkor').innerText = `Bagian A (PG): ${skorPG}/100 | Bagian B (Essay): Menunggu Penilaian Guru`;
+            document.getElementById('hasilNilai').classList.remove('hidden');
+            
+            document.getElementById('hasilNilai').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            alert(`✅ Jawaban berhasil diproses!\n\nNama: ${nama}\nNIS: ${nis}\nKelas: ${kelas}\nSkor Sementara (Pilihan Ganda): ${skorPG}/100\n\nCatatan: Bagian Essay akan dinilai secara manual oleh guru.`);
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pertemuan 12: Color Correction & Color Grading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        luxury: {
+                            900: '#0B0F19',
+                            800: '#151B2B',
+                            700: '#1E293B',
+                            gold: '#D4AF37',
+                            goldLight: '#F3E5AB',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(21, 27, 43, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #D4AF37 0%, #F3E5AB 50%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hover-lift {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px -5px rgba(212, 175, 55, 0.15);
+        }
+        .quiz-container::-webkit-scrollbar { width: 8px; }
+        .quiz-container::-webkit-scrollbar-track { background: #151B2B; }
+        .quiz-container::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 4px; }
+
+        /* Color Grading Simulator */
+        .scene-canvas {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            transition: filter 0.6s ease;
+        }
+        .scene-base {
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 30% 40%, rgba(255,200,100,0.4) 0%, transparent 50%),
+                radial-gradient(circle at 70% 60%, rgba(100,150,255,0.3) 0%, transparent 50%),
+                linear-gradient(135deg, #4A6FA5 0%, #2C3E50 40%, #1a1a2e 100%);
+        }
+        .scene-sun {
+            position: absolute;
+            top: 15%;
+            left: 25%;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #FFD700 0%, #FFA500 60%, transparent 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+        }
+        .scene-mountain {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60%;
+            background: linear-gradient(180deg, #3d5a80 0%, #293241 100%);
+            clip-path: polygon(0 60%, 20% 30%, 40% 50%, 60% 25%, 80% 45%, 100% 35%, 100% 100%, 0 100%);
+        }
+        .scene-person {
+            position: absolute;
+            bottom: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 80px;
+        }
+        .person-head {
+            width: 30px;
+            height: 30px;
+            background: #d4a574;
+            border-radius: 50%;
+            margin: 0 auto;
+        }
+        .person-body {
+            width: 40px;
+            height: 50px;
+            background: #8b0000;
+            border-radius: 8px 8px 4px 4px;
+            margin-top: 2px;
+        }
+        .scene-label {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: #D4AF37;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .grade-btn {
+            transition: all 0.2s ease;
+        }
+        .grade-btn.active {
+            background: #D4AF37 !important;
+            color: #0B0F19 !important;
+            border-color: #D4AF37 !important;
+        }
+
+        /* Color Wheel */
+        .color-wheel {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: conic-gradient(
+                hsl(0, 100%, 50%),
+                hsl(30, 100%, 50%),
+                hsl(60, 100%, 50%),
+                hsl(90, 100%, 50%),
+                hsl(120, 100%, 50%),
+                hsl(150, 100%, 50%),
+                hsl(180, 100%, 50%),
+                hsl(210, 100%, 50%),
+                hsl(240, 100%, 50%),
+                hsl(270, 100%, 50%),
+                hsl(300, 100%, 50%),
+                hsl(330, 100%, 50%),
+                hsl(360, 100%, 50%)
+            );
+            position: relative;
+            margin: 0 auto;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+        }
+        .color-wheel::after {
+            content: '';
+            position: absolute;
+            inset: 30%;
+            background: #151B2B;
+            border-radius: 50%;
+        }
+
+        /* Before/After Slider */
+        .comparison-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid rgba(212, 175, 55, 0.3);
+        }
+        .comparison-side {
+            position: absolute;
+            inset: 0;
+        }
+        .comparison-before {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 50%, #374151 100%);
+            filter: saturate(0.3) brightness(0.8);
+        }
+        .comparison-after {
+            background: linear-gradient(135deg, #D4AF37 0%, #8B6914 50%, #0B0F19 100%);
+            clip-path: inset(0 50% 0 0);
+            transition: clip-path 0.3s ease;
+        }
+        .comparison-divider {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 3px;
+            background: #D4AF37;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
+            z-index: 10;
+            transition: left 0.3s ease;
+        }
+        .comparison-divider::before {
+            content: '◀▶';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #D4AF37;
+            color: #0B0F19;
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .comparison-label {
+            position: absolute;
+            top: 10px;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            z-index: 5;
+        }
+        .label-before {
+            left: 10px;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+        }
+        .label-after {
+            right: 10px;
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-luxury-900 text-gray-200 font-sans antialiased selection:bg-luxury-gold selection:text-luxury-900">
+
+    <!-- Navigasi -->
+    <nav class="fixed w-full z-50 glass border-b border-luxury-gold/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <a href="index.html" class="font-serif text-lg font-semibold text-white tracking-wide hover:text-luxury-gold transition">
+                        ← Kembali ke Beranda
+                    </a>
+                </div>
+                <div class="hidden md:flex space-x-6 text-sm font-medium">
+                    <a href="#materi" class="hover:text-luxury-gold transition">Materi</a>
+                    <a href="#simulator" class="hover:text-luxury-gold transition">Simulator</a>
+                    <a href="#uji-formatif" class="px-4 py-2 bg-luxury-gold text-luxury-900 font-bold rounded-full hover:bg-yellow-400 transition">Uji Formatif</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Materi -->
+    <header class="pt-32 pb-16 bg-gradient-to-b from-luxury-800 to-luxury-900 border-b border-luxury-gold/10">
+        <div class="max-w-5xl mx-auto px-4 text-center">
+            <span class="inline-block px-4 py-1 rounded-full border border-luxury-gold/30 bg-luxury-gold/10 text-luxury-gold text-xs font-bold tracking-widest uppercase mb-4">
+                Pertemuan 12 dari 16
+            </span>
+            <h1 class="font-serif text-4xl md:text-5xl font-bold text-white mb-6">
+                Color Correction <br><span class="gold-gradient-text">& Color Grading</span>
+            </h1>
+            <p class="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
+                Seni melukis emosi melalui warna — dari memperbaiki kesalahan teknis (<em>color correction</em>) hingga menciptakan <em>look</em> sinematik yang memperkuat atmosfer cerita (<em>color grading</em>).
+            </p>
+            <div class="mt-8 flex justify-center gap-4">
+                <a href="11.html" class="text-sm text-gray-400 hover:text-luxury-gold transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    Bab Sebelumnya
+                </a>
+                <span class="text-gray-600">|</span>
+                <a href="13.html" class="text-sm text-luxury-gold hover:text-white transition flex items-center gap-2 font-semibold">
+                    Bab Selanjutnya: Audio Mixing & Mastering
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Konten Utama -->
+    <main id="materi" class="max-w-5xl mx-auto px-4 py-16 space-y-16">
+
+        <!-- Pendahuluan -->
+        <section class="glass rounded-2xl p-8 md:p-10 border-l-4 border-luxury-gold">
+            <h2 class="font-serif text-2xl font-bold text-white mb-4">Pendahuluan</h2>
+            <p class="text-gray-300 leading-relaxed mb-4">
+                Warna adalah <strong class="text-luxury-gold">bahasa emosi yang paling purba</strong>. Sebelum manusia memiliki kata-kata, mereka sudah merespons warna — merah untuk bahaya, biru untuk ketenangan, hijau untuk kehidupan. Dalam sinema, colorist (ahli warna) adalah "pelukis tak terlihat" yang menggunakan palet warna untuk mengarahkan emosi penonton tanpa mereka sadari.
+            </p>
+            <p class="text-gray-300 leading-relaxed">
+                Pertemuan ini akan membawa Anda menyelami dunia color correction dan color grading — dua disiplin yang sering disalahartikan sebagai satu hal yang sama. Anda akan mempelajari cara memperbaiki kesalahan warna teknis, memahami color wheel, menguasai tools profesional seperti Lift/Gamma/Gain dan Curves, serta menciptakan <em>looks</em> sinematik legendaris seperti <strong class="text-luxury-gold">Teal & Orange</strong> yang digunakan di hampir semua film Hollywood modern.
+            </p>
+        </section>
+
+        <!-- Konsep Kunci -->
+        <section>
+            <h2 class="font-serif text-2xl font-bold text-luxury-gold mb-6 flex items-center gap-3">
+                <span class="text-3xl">🔑</span> Konsep Kunci
+            </h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🔧</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Color Correction</h3>
+                    <p class="text-sm text-gray-400">Proses memperbaiki kesalahan teknis warna agar terlihat natural dan konsisten antar-shot (white balance, exposure, contrast).</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🎨</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Color Grading</h3>
+                    <p class="text-sm text-gray-400">Proses kreatif memberikan "look" atau mood warna tertentu untuk memperkuat atmosfer cerita (teal & orange, vintage, noir).</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🌡️</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Color Temperature</h3>
+                    <p class="text-sm text-gray-400">Ukuran kehangatan/kejenuhan cahaya dalam Kelvin (K). 3200K = hangat (tungsten), 5600K = daylight, 7000K+ = dingin.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🎯</div>
+                    <h3 class="font-bold text-white text-lg mb-2">HSL</h3>
+                    <p class="text-sm text-gray-400">Tiga dimensi warna: Hue (jenis warna), Saturation (intensitas), Luminance (kecerahan).</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">📊</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Lift/Gamma/Gain</h3>
+                    <p class="text-sm text-gray-400">Tiga kontrol warna untuk shadows (lift), midtones (gamma), dan highlights (gain) — fondasi color grading.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🎭</div>
+                    <h3 class="font-bold text-white text-lg mb-2">LUT (Look-Up Table)</h3>
+                    <p class="text-sm text-gray-400">File preset warna yang menerapkan "look" tertentu secara instan — seperti filter Instagram untuk video profesional.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simulator Color Grading -->
+        <section id="simulator" class="bg-gradient-to-br from-luxury-800 to-luxury-900 rounded-2xl p-8 border border-luxury-gold/20">
+            <h2 class="font-serif text-2xl font-bold text-white mb-2 flex items-center gap-3">
+                <span class="text-3xl">🎛️</span> Simulator Color Grading
+            </h2>
+            <p class="text-gray-400 text-sm mb-6">Pilih "look" sinematik untuk melihat bagaimana warna mengubah emosi dan atmosfer scene yang sama. Perhatikan bagaimana mood berubah drastis hanya dengan manipulasi warna.</p>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Scene Visual -->
+                <div>
+                    <div class="scene-canvas" id="sceneCanvas">
+                        <div class="scene-base"></div>
+                        <div class="scene-sun"></div>
+                        <div class="scene-mountain"></div>
+                        <div class="scene-person">
+                            <div class="person-head"></div>
+                            <div class="person-body"></div>
+                        </div>
+                        <div class="scene-label" id="sceneLabel">ORIGINAL</div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2 text-center">Scene yang sama, "look" berbeda — emosi yang disampaikan pun berbeda</p>
+                </div>
+
+                <!-- Kontrol -->
+                <div class="space-y-4">
+                    <p class="text-sm font-bold text-luxury-gold">Pilih Sinematic Look:</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setGrade('original')" class="grade-btn active bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🎬 Original</button>
+                        <button onclick="setGrade('teal-orange')" class="grade-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🔵🟠 Teal & Orange</button>
+                        <button onclick="setGrade('warm')" class="grade-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🌅 Warm Nostalgia</button>
+                        <button onclick="setGrade('cold')" class="grade-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">❄️ Cold Blue</button>
+                        <button onclick="setGrade('vintage')" class="grade-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">📼 Vintage Film</button>
+                        <button onclick="setGrade('noir')" class="grade-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🖤 Film Noir</button>
+                        <button onclick="setGrade('bleach')" class="grade-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">⚔️ Bleach Bypass</button>
+                        <button onclick="setGrade('matrix')" class="grade-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">💚 Matrix Green</button>
+                    </div>
+
+                    <div class="bg-luxury-900 p-4 rounded-lg border border-luxury-gold/20">
+                        <p class="text-sm font-bold text-luxury-gold mb-1" id="gradeTitle">🎬 Original (No Grade)</p>
+                        <p class="text-xs text-gray-400 mb-2" id="gradeDesc">Footage mentah langsung dari kamera tanpa color grading. Warna natural, kontras standar. Ini adalah titik awal sebelum colorist mulai bekerja.</p>
+                        <div class="text-xs text-gray-500 border-t border-luxury-gold/10 pt-2 mt-2">
+                            <p class="font-bold text-gray-300 mb-1">💡 Penggunaan Ideal:</p>
+                            <p id="gradeUsage">Sebagai referensi sebelum grading. Tidak pernah digunakan di film final — footage harus selalu di-grade untuk konsistensi dan mood.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Visualisasi Before/After -->
+        <section class="bg-luxury-800 rounded-2xl p-8 border border-luxury-gold/10">
+            <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">🔄 Perbedaan Color Correction vs Color Grading</h3>
+            <p class="text-sm text-gray-400 mb-6">Geser slider untuk melihat perbedaan antara footage mentah (kiri) dengan hasil akhir yang telah di-correct dan di-grade (kanan):</p>
+            
+            <div class="comparison-container" id="comparisonContainer">
+                <div class="comparison-side comparison-before"></div>
+                <div class="comparison-side comparison-after" id="comparisonAfter"></div>
+                <div class="comparison-divider" id="comparisonDivider"></div>
+                <div class="comparison-label label-before">BEFORE (RAW)</div>
+                <div class="comparison-label label-after">AFTER (GRADED)</div>
+            </div>
+            <input type="range" id="comparisonSlider" min="0" max="100" value="50" class="w-full mt-4 accent-luxury-gold">
+            <p class="text-xs text-gray-500 mt-2 text-center">Kiri: Footage mentah (desaturated, flat) | Kanan: Hasil color correction + grading (Teal & Orange)</p>
+        </section>
+
+        <!-- Color Wheel -->
+        <section class="bg-luxury-800 rounded-2xl p-8 border border-luxury-gold/10">
+            <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">🎯 Color Wheel & Hubungan Warna</h3>
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div>
+                    <div class="color-wheel"></div>
+                    <p class="text-xs text-gray-500 mt-4 text-center">Color Wheel — dasar teori warna yang digunakan colorist</p>
+                </div>
+                <div class="space-y-3">
+                    <div class="bg-luxury-900 p-4 rounded-lg border border-luxury-gold/10">
+                        <p class="text-sm font-bold text-white mb-1">🔵🟠 Complementary Colors</p>
+                        <p class="text-xs text-gray-400">Warna yang berseberangan di color wheel (misal: teal & orange). Kontras tinggi, menciptakan ketegangan visual yang dinamis. Dasar dari "Teal & Orange look".</p>
+                    </div>
+                    <div class="bg-luxury-900 p-4 rounded-lg border border-luxury-gold/10">
+                        <p class="text-sm font-bold text-white mb-1">🎨 Analogous Colors</p>
+                        <p class="text-xs text-gray-400">Warna yang berdekatan di color wheel (misal: biru, biru-hijau, hijau). Harmonis, menenangkan, natural.</p>
+                    </div>
+                    <div class="bg-luxury-900 p-4 rounded-lg border border-luxury-gold/10">
+                        <p class="text-sm font-bold text-white mb-1">🔺 Triadic Colors</p>
+                        <p class="text-xs text-gray-400">Tiga warna yang membentuk segitiga sama sisi di color wheel. Seimbang namun dinamis — sering digunakan di film animasi.</p>
+                    </div>
+                    <div class="bg-luxury-900 p-4 rounded-lg border border-luxury-gold/10">
+                        <p class="text-sm font-bold text-white mb-1">🌡️ Warm vs Cool</p>
+                        <p class="text-xs text-gray-400">Warm (merah, oranye, kuning) = energi, gairah, nostalgia. Cool (biru, hijau, ungu) = ketenangan, kesedihan, misteri.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Studi Kasus -->
+        <section class="bg-red-900/10 border border-red-500/20 rounded-2xl p-8">
+            <h3 class="font-serif text-xl font-bold text-red-400 mb-4 flex items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                📖 Studi Kasus: Inkonsistensi Warna yang Menghancurkan Kontinuitas
+            </h3>
+            <p class="text-gray-300 mb-4">
+                Seorang siswa DKV mengedit video dokumenter berdurasi 10 menit. Ia merekam wawancara di pagi hari (cahaya dingin kebiruan) dan B-roll di siang hari (cahaya hangat kekuningan). Tanpa melakukan color correction, ia langsung menggabungkan kedua footage di timeline. Hasilnya: warna wajah narasumber berubah drastis setiap kali cut dari wawancara ke B-roll. Penonton merasa "terlempar" dari satu momen ke momen lain, dan video terlihat sangat amatir.
+            </p>
+            <div class="bg-luxury-900/50 p-4 rounded-lg border-l-2 border-red-500">
+                <p class="text-sm text-gray-300"><strong class="text-red-400">Pembelajaran:</strong> (1) Color correction adalah WAJIB sebelum color grading — tanpa konsistensi warna dasar, grading tidak akan pernah terlihat profesional. (2) Selalu kalibrasi white balance di setiap setup syuting. (3) Gunakan reference monitor atau vectorscope untuk memastikan warna konsisten. (4) Di produksi profesional, colorist menghabiskan 60% waktu untuk correction dan hanya 40% untuk grading.</p>
+            </div>
+        </section>
+
+        <!-- Refleksi -->
+        <section class="bg-luxury-800 rounded-2xl p-8 border border-luxury-gold/10">
+            <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">💭 Refleksi untuk Siswa DKV</h3>
+            <p class="text-gray-300 leading-relaxed">
+                Di SMKN 1 Koto Balingka, Anda mungkin menggunakan software gratis seperti DaVinci Resolve (versi free) atau Lumetri Color di Premiere Pro. Tools-nya mungkin terlihat rumit di awal, tetapi prinsipnya sama dengan yang digunakan colorist Hollywood: <em class="text-luxury-gold">perbaiki dulu (correction), percantik kemudian (grading)</em>. Mulailah dengan footage yang Anda rekam sendiri, coba terapkan Teal & Orange look, dan amati bagaimana emosi video Anda berubah drastis. Ingat: warna bukan dekorasi — warna adalah <strong class="text-luxury-gold">emosi yang divisualkan</strong>.
+            </p>
+        </section>
+
+        <!-- Detail Materi -->
+        <section class="space-y-8">
+            <h2 class="font-serif text-2xl font-bold text-white border-b border-luxury-gold/20 pb-2">Uraian Materi Lengkap</h2>
+            
+            <div class="space-y-8">
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">1. Color Correction vs Color Grading</h3>
+                    <p class="text-gray-300 mb-3">Dua disiplin yang sering disalahartikan sebagai satu hal:</p>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🔧 Color Correction (Teknis)</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>Tujuan:</strong> Memperbaiki kesalahan teknis</li>
+                                <li>Menyelaraskan white balance</li>
+                                <li>Memperbaiki exposure (over/under)</li>
+                                <li>Menyamakan kontras antar-shot</li>
+                                <li>Membuat warna terlihat <em>natural</em></li>
+                                <li><strong>Sifat:</strong> Objektif, berbasis standar teknis</li>
+                                <li><strong>Waktu:</strong> Dilakukan PERTAMA</li>
+                            </ul>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎨 Color Grading (Kreatif)</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>Tujuan:</strong> Menciptakan mood/emosi</li>
+                                <li>Memberikan "look" sinematik</li>
+                                <li>Memperkuat atmosfer cerita</li>
+                                <li>Membangun identitas visual film</li>
+                                <li>Membuat warna terlihat <em>stylish</em></li>
+                                <li><strong>Sifat:</strong> Subjektif, berbasis seni</li>
+                                <li><strong>Waktu:</strong> Dilakukan SETELAH correction</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">2. Dasar-Dasar Teori Warna</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Hue:</strong> Jenis warna itu sendiri (merah, biru, hijau, dll). Diukur dalam derajat (0°-360°) di color wheel.</li>
+                        <li><strong>Saturation:</strong> Intensitas atau kemurnian warna. 0% = abu-abu (desaturated), 100% = warna penuh (vibrant).</li>
+                        <li><strong>Luminance / Value / Brightness:</strong> Tingkat kecerahan warna. 0% = hitam, 100% = putih.</li>
+                        <li><strong>Color Temperature (Kelvin):</strong>
+                            <ul class="list-circle list-inside ml-6 mt-1 text-gray-400">
+                                <li>1000-3000K = Very Warm (lilin, tungsten) — oranye/kuning</li>
+                                <li>3000-5000K = Warm (lampu rumah, golden hour)</li>
+                                <li>5000-6500K = Neutral (daylight, flash)</li>
+                                <li>6500-10000K = Cool (bayangan, langit mendung) — biru</li>
+                                <li>10000K+ = Very Cool (open shade) — biru tua</li>
+                            </ul>
+                        </li>
+                        <li><strong>Tint:</strong> Warna hijau-magenta. Pelengkap dari color temperature (biru-kuning).</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">3. Color Wheel dalam Color Grading</h3>
+                    <p class="text-gray-300 mb-3">Color wheel adalah alat fundamental colorist. Dalam software seperti DaVinci Resolve, ada 3 color wheels utama:</p>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Lift (Shadows):</strong> Mengontrol warna di area gelap. Geser ke arah biru = bayangan kebiruan (cold shadows).</li>
+                        <li><strong>Gamma (Midtones):</strong> Mengontrol warna di area tengah (kulit, objek utama). Paling berpengaruh pada persepsi warna keseluruhan.</li>
+                        <li><strong>Gain (Highlights):</strong> Mengontrol warna di area terang. Geser ke arah oranye = highlight hangat (golden hour look).</li>
+                    </ul>
+                    <p class="text-gray-300 mt-3"><strong class="text-luxury-gold">Prinsip Komplementer:</strong> Untuk menciptakan look sinematik, colorist sering memberikan warna komplementer ke shadows dan highlights. Contoh: shadows teal (biru-hijau) + highlights orange = <em>Teal & Orange look</em>.</p>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">4. Tools Utama Color Grading</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📊 Curves</h4>
+                            <p class="text-sm text-gray-300 mb-2">Grafik input-output yang mengontrol tonal range. Lebih presisi daripada slider.</p>
+                            <ul class="text-xs text-gray-400 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>RGB Curves:</strong> Mengontrol brightness keseluruhan</li>
+                                <li><strong>Custom Curves:</strong> Mengontrol hue spesifik</li>
+                                <li><strong>Hue vs Sat/Lum:</strong> Mengatur saturation/brightness per warna</li>
+                            </ul>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎚️ HSL Qualifier</h4>
+                            <p class="text-sm text-gray-300 mb-2">Alat untuk mengisolasi warna tertentu agar bisa di-adjust secara terpisah.</p>
+                            <ul class="text-xs text-gray-400 space-y-1 ml-4 list-disc list-inside">
+                                <li>Misalnya: mengubah warna langit saja tanpa mempengaruhi kulit</li>
+                                <li>Misalnya: membuat rumput lebih hijau tanpa mengubah warna lain</li>
+                                <li>Menggunakan hue, saturation, luminance sebagai filter</li>
+                            </ul>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎭 LUT (Look-Up Table)</h4>
+                            <p class="text-sm text-gray-300 mb-2">File preset (.cube) yang menerapkan transformasi warna kompleks secara instan.</p>
+                            <ul class="text-xs text-gray-400 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>Technical LUT:</strong> Mengkonversi log footage ke Rec.709</li>
+                                <li><strong>Creative LUT:</strong> Memberikan "look" sinematik tertentu</li>
+                                <li><strong>Display LUT:</strong> Untuk monitoring di layar non-color-accurate</li>
+                            </ul>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📈 Scopes (Monitor Teknis)</h4>
+                            <p class="text-sm text-gray-300 mb-2">Visualisasi data warna untuk memastikan grading akurat secara teknis.</p>
+                            <ul class="text-xs text-gray-400 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>Waveform:</strong> Melihat distribusi tonal (shadows/mids/highlights)</li>
+                                <li><strong>Parade (RGB):</strong> Melihat keseimbangan channel R-G-B</li>
+                                <li><strong>Vectorscope:</strong> Melihat saturasi dan hue — untuk skin tone</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">5. Sinematic Looks Populer</h3>
+                    <div class="space-y-4">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🔵🟠 Teal & Orange (Blockbuster Look)</h4>
+                            <p class="text-sm text-gray-300 mb-2">Look paling populer di film Hollywood modern. Shadows ke teal (biru-hijau), highlights ke orange, skin tone tetap natural.</p>
+                            <p class="text-xs text-gray-400"><strong>Contoh:</strong> Transformers, Mad Max: Fury Road, Marvel movies. <strong>Mengapa berhasil:</strong> Orange mendekati warna kulit manusia, teal adalah komplementernya — menciptakan kontras maksimal yang pleasing secara visual.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🌅 Warm Nostalgia / Vintage</h4>
+                            <p class="text-sm text-gray-300 mb-2">Seluruh frame dihangatkan dengan tone kuning/oranye, saturation sedikit dikurangi, contrast lembut.</p>
+                            <p class="text-xs text-gray-400"><strong>Contoh:</strong> Amélie, The Grand Budapest Hotel (Wes Anderson). <strong>Mood:</strong> Nostalgia, kehangatan, kenangan, masa kecil.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">❄️ Cold Blue / Bleak</h4>
+                            <p class="text-sm text-gray-300 mb-2">Dominasi biru di seluruh frame, desaturated, kontras tinggi. Menghilangkan warna hangat.</p>
+                            <p class="text-xs text-gray-400"><strong>Contoh:</strong> The Revenant, Prisoners, Sicario. <strong>Mood:</strong> Kesedihan, isolasi, dingin, ketegangan, keputusasaan.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🖤 Film Noir</h4>
+                            <p class="text-sm text-gray-300 mb-2">Hitam-putih atau sangat desaturated, kontras sangat tinggi, shadows dalam, highlights tajam.</p>
+                            <p class="text-xs text-gray-400"><strong>Contoh:</strong> Sin City, The Lighthouse. <strong>Mood:</strong> Misterius, gelap, moral ambiguity, retro.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">⚔️ Bleach Bypass</h4>
+                            <p class="text-sm text-gray-300 mb-2">Saturation sangat rendah, kontras sangat tinggi, warna seperti "pudar" tapi dengan detail tajam.</p>
+                            <p class="text-xs text-gray-400"><strong>Contoh:</strong> Saving Private Ryan, Fight Club, Seven. <strong>Mood:</strong> Kasar, gritty, brutal, dokumenter, perang.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">💚 Matrix Green / Cyberpunk</h4>
+                            <p class="text-sm text-gray-300 mb-2">Dominasi hijau (terkadang dengan cyan), shadows ke hijau tua, highlights ke kuning-hijau.</p>
+                            <p class="text-xs text-gray-400"><strong>Contoh:</strong> The Matrix, Blade Runner 2049. <strong>Mood:</strong> Futuristik, digital, distopia, teknologi.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">6. Workflow Color Grading Profesional</h3>
+                    <ol class="list-decimal list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Shot Matching:</strong> Menyelaraskan semua shot dalam scene agar konsisten (white balance, exposure, contrast).</li>
+                        <li><strong>Normalisasi:</strong> Membawa footage ke standar Rec.709 (jika direkam di log/flat profile).</li>
+                        <li><strong>Primary Correction:</strong> Menggunakan Lift/Gamma/Gain global untuk memperbaiki keseluruhan image.</li>
+                        <li><strong>Secondary Correction:</strong> Menggunakan qualifier/mask untuk meng-adjust area spesifik (kulit, langit, dll).</li>
+                        <li><strong>Creative Grading:</strong> Menerapkan "look" sinematik sesuai mood yang diinginkan.</li>
+                        <li><strong>Final Polish:</strong> Menambahkan vignette, grain, atau efek akhir lainnya.</li>
+                        <li><strong>Quality Control:</strong> Memeriksa di berbagai monitor dan perangkat untuk memastikan konsistensi.</li>
+                    </ol>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">7. Skin Tone: Aturan Emas Colorist</h3>
+                    <p class="text-gray-300 mb-3">Skin tone manusia adalah area paling kritis dalam color grading. Penonton akan langsung merasakan jika warna kulit terlihat "aneh":</p>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Skin Tone Line:</strong> Di vectorscope, skin tone semua ras manusia jatuh di garis yang sama (antara merah dan kuning) — disebut "skin tone line" atau "iodine line".</li>
+                        <li><strong>Jangan terlalu saturated:</strong> Kulit oranye berlebihan terlihat seperti "Oompa Loompa".</li>
+                        <li><strong>Jangan terlalu desaturated:</strong> Kulit abu-abu terlihat seperti mayat atau sakit.</li>
+                        <li><strong>Gunakan qualifier:</strong> Isolasi skin tone agar bisa di-adjust tanpa mempengaruhi warna lain.</li>
+                        <li><strong>Cek di monitor terkalibrasi:</strong> Warna kulit adalah referensi paling mudah untuk menilai akurasi warna monitor.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">8. Software Color Grading</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🎨 DaVinci Resolve</p>
+                            <p class="text-xs text-gray-400">Standar industri color grading. Versi gratis sangat powerful. Digunakan di hampir semua film Hollywood untuk grading.</p>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🎬 Adobe Premiere Pro (Lumetri)</p>
+                            <p class="text-xs text-gray-400">Panel Lumetri Color terintegrasi. Cocok untuk editor yang juga ingin grading tanpa pindah software.</p>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🍎 Final Cut Pro</p>
+                            <p class="text-xs text-gray-400">Color Board dan Color Wheels. Cepat dan intuitif untuk macOS user.</p>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">📱 CapCut / VN (Mobile)</p>
+                            <p class="text-xs text-gray-400">Filter dan adjustment dasar. Terbatas tapi cukup untuk konten media sosial.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tips Praktis -->
+        <section class="bg-gradient-to-r from-luxury-gold/10 to-transparent p-6 rounded-xl border-l-4 border-luxury-gold">
+            <h3 class="font-bold text-white mb-3">💡 Tips Praktis Color Correction & Grading</h3>
+            <ul class="space-y-2 text-sm text-gray-300">
+                <li>✅ Selalu lakukan color correction SEBELUM color grading — jangan pernah skip tahap ini.</li>
+                <li>✅ Gunakan monitor yang terkalibrasi atau minimal kalibrasi manual dengan reference image.</li>
+                <li>✅ Jangan grading di ruangan yang terlalu terang atau terlalu gelap — akan mempersepsi warna secara salah.</li>
+                <li>✅ Gunakan scopes (waveform, vectorscope) — jangan hanya mengandalkan mata.</li>
+                <li>✅ Untuk skin tone, selalu cek di vectorscope — harus jatuh di "skin tone line".</li>
+                <li>✅ Kurangi saturation, jangan ditambah — footage modern sudah cukup saturated. Look sinematik biasanya sedikit desaturated.</li>
+                <li>✅ Simpan stills/frame referensi dari film favorit untuk ditiru look-nya.</li>
+                <li>✅ Jangan over-grade — subtle changes seringkali lebih powerful daripada perubahan drastis.</li>
+                <li>✅ Rekam di flat/log profile jika memungkinkan — memberikan lebih banyak latitude untuk grading.</li>
+                <li>✅ Selalu tonton hasil grading di berbagai perangkat (TV, laptop, HP) untuk memastikan konsistensi.</li>
+            </ul>
+        </section>
+
+        <!-- Kesimpulan & Daftar Pustaka -->
+        <section class="border-t border-luxury-gold/10 pt-8">
+            <h3 class="font-serif text-xl font-bold text-white mb-4">Kesimpulan</h3>
+            <p class="text-gray-300 mb-6">
+                Color correction dan color grading adalah dua sisi dari mata uang yang sama dalam pasca-produksi video. Correction memastikan fondasi teknis yang solid — warna natural, konsisten, dan akurat. Grading adalah seni yang mengubah fondasi tersebut menjadi karya emosional yang memikat. Dengan menguasai color wheel, Lift/Gamma/Gain, Curves, HSL Qualifier, dan berbagai sinematic looks (Teal & Orange, Vintage, Noir, Bleach Bypass, Matrix), siswa DKV memiliki kemampuan yang setara dengan colorist profesional. Ingatlah: <strong class="text-luxury-gold">"Color is the soul of cinema — it transforms images into emotions."</strong>
+            </p>
+            <h3 class="font-serif text-lg font-bold text-luxury-gold mb-3">📚 Daftar Pustaka</h3>
+            <ul class="text-sm text-gray-400 space-y-1 list-disc list-inside">
+                <li>Brown, B. (2013). <em>The Filmmaker's Handbook: A Comprehensive Guide for the Digital Age</em>. New York: Plume.</li>
+                <li>Hull, J. (2017). <em>Color Correction Handbook: Professional Techniques for Video and Cinema</em> (2nd ed.). San Francisco: Peachpit Press.</li>
+                <li>Van Hurkman, A. (2

@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pertemuan 9: Manajemen Aset & Penyuntingan Kasar (Rough Cut)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        luxury: {
+                            900: '#0B0F19',
+                            800: '#151B2B',
+                            700: '#1E293B',
+                            gold: '#D4AF37',
+                            goldLight: '#F3E5AB',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(21, 27, 43, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #D4AF37 0%, #F3E5AB 50%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hover-lift {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px -5px rgba(212, 175, 55, 0.15);
+        }
+        .quiz-container::-webkit-scrollbar { width: 8px; }
+        .quiz-container::-webkit-scrollbar-track { background: #151B2B; }
+        .quiz-container::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 4px; }
+
+        /* Timeline Simulator */
+        .timeline-container {
+            background: linear-gradient(180deg, #0B0F19 0%, #151B2B 100%);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .timeline-ruler {
+            height: 24px;
+            background: #0B0F19;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            position: relative;
+            margin-bottom: 12px;
+            font-family: monospace;
+            font-size: 10px;
+            color: #D4AF37;
+        }
+        .timeline-track {
+            min-height: 60px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px dashed rgba(212, 175, 55, 0.2);
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            position: relative;
+        }
+        .track-label {
+            position: absolute;
+            left: -4px;
+            top: 50%;
+            transform: translateY(-50%) translateX(-100%);
+            font-size: 10px;
+            font-weight: bold;
+            color: #D4AF37;
+            padding-right: 8px;
+            white-space: nowrap;
+        }
+        .clip {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: grab;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .clip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        .clip.video { background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%); color: white; }
+        .clip.audio { background: linear-gradient(135deg, #10B981 0%, #047857 100%); color: white; }
+        .clip.music { background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); color: white; }
+        .clip.sfx { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: white; }
+        .clip.title { background: linear-gradient(135deg, #EC4899 0%, #BE185D 100%); color: white; }
+        .clip.bad-take { 
+            background: linear-gradient(135deg, #EF4444 0%, #991B1B 100%); 
+            color: white; 
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+        .playhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #D4AF37;
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.8);
+            z-index: 20;
+            pointer-events: none;
+            transition: left 0.3s ease;
+        }
+        .playhead::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -5px;
+            width: 12px;
+            height: 12px;
+            background: #D4AF37;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
+        }
+        .timeline-btn {
+            transition: all 0.2s ease;
+        }
+        .timeline-btn.active {
+            background: #D4AF37 !important;
+            color: #0B0F19 !important;
+        }
+        .folder-tree {
+            font-family: monospace;
+            font-size: 12px;
+            color: #D4AF37;
+            background: #0B0F19;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        .folder-tree .folder { color: #F3E5AB; font-weight: bold; }
+        .folder-tree .file { color: #9CA3AF; }
+        .folder-tree .good { color: #10B981; }
+        .folder-tree .bad { color: #EF4444; }
+    </style>
+</head>
+<body class="bg-luxury-900 text-gray-200 font-sans antialiased selection:bg-luxury-gold selection:text-luxury-900">
+
+    <!-- Navigasi -->
+    <nav class="fixed w-full z-50 glass border-b border-luxury-gold/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <a href="index.html" class="font-serif text-lg font-semibold text-white tracking-wide hover:text-luxury-gold transition">
+                        ← Kembali ke Beranda
+                    </a>
+                </div>
+                <div class="hidden md:flex space-x-6 text-sm font-medium">
+                    <a href="#materi" class="hover:text-luxury-gold transition">Materi</a>
+                    <a href="#simulator" class="hover:text-luxury-gold transition">Simulator</a>
+                    <a href="#uji-formatif" class="px-4 py-2 bg-luxury-gold text-luxury-900 font-bold rounded-full hover:bg-yellow-400 transition">Uji Formatif</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Materi -->
+    <header class="pt-32 pb-16 bg-gradient-to-b from-luxury-800 to-luxury-900 border-b border-luxury-gold/10">
+        <div class="max-w-5xl mx-auto px-4 text-center">
+            <span class="inline-block px-4 py-1 rounded-full border border-luxury-gold/30 bg-luxury-gold/10 text-luxury-gold text-xs font-bold tracking-widest uppercase mb-4">
+                Pertemuan 9 dari 16
+            </span>
+            <h1 class="font-serif text-4xl md:text-5xl font-bold text-white mb-6">
+                Manajemen Aset & <span class="gold-gradient-text">Penyuntingan Kasar</span>
+            </h1>
+            <p class="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
+                Fondasi pasca-produksi yang kuat — dari pengorganisasian file footage, proses logging untuk memilah klip layak pakai, hingga menyusun <em>rough cut</em> pertama yang menjadi kerangka cerita visual Anda.
+            </p>
+            <div class="mt-8 flex justify-center gap-4">
+                <a href="8.html" class="text-sm text-gray-400 hover:text-luxury-gold transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    UTS (Pertemuan 8)
+                </a>
+                <span class="text-gray-600">|</span>
+                <a href="10.html" class="text-sm text-luxury-gold hover:text-white transition flex items-center gap-2 font-semibold">
+                    Bab Selanjutnya: Fine Cut & Continuity
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Konten Utama -->
+    <main id="materi" class="max-w-5xl mx-auto px-4 py-16 space-y-16">
+
+        <!-- Pendahuluan -->
+        <section class="glass rounded-2xl p-8 md:p-10 border-l-4 border-luxury-gold">
+            <h2 class="font-serif text-2xl font-bold text-white mb-4">Pendahuluan</h2>
+            <p class="text-gray-300 leading-relaxed mb-4">
+                Selamat datang di tahap <strong class="text-luxury-gold">Pasca-Produksi</strong> — fase di mana semua kepingan puzzle yang Anda kumpulkan di tahap produksi akhirnya dirakit menjadi sebuah karya yang utuh. Jika produksi adalah "memasak bahan-bahan", maka pasca-produksi adalah "menyajikan hidangan akhir" yang siap dinikmati penonton.
+            </p>
+            <p class="text-gray-300 leading-relaxed">
+                Pertemuan ini akan membahas dua langkah paling krusial di awal pasca-produksi: <strong class="text-luxury-gold">Manajemen Aset</strong> (mengorganisir ratusan file footage dan audio agar tidak chaos) dan <strong class="text-luxury-gold">Penyuntingan Kasar (Rough Cut)</strong> (menyusun klip-klip terpilih menjadi kerangka cerita pertama). Editor profesional manapun akan setuju: fondasi yang kuat di tahap ini akan menghemat 50% waktu editing berikutnya.
+            </p>
+        </section>
+
+        <!-- Konsep Kunci -->
+        <section>
+            <h2 class="font-serif text-2xl font-bold text-luxury-gold mb-6 flex items-center gap-3">
+                <span class="text-3xl">🔑</span> Konsep Kunci
+            </h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">📁</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Data Management</h3>
+                    <p class="text-sm text-gray-400">Proses memindahkan, mengelompokkan, dan membackup file dari kartu memori ke komputer dengan struktur folder yang rapi.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🗂️</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Bin Organization</h3>
+                    <p class="text-sm text-gray-400">Pengelompokan klip di dalam software editing berdasarkan Scene, Shot, atau kategori lain untuk memudahkan pencarian.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🔍</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Logging</h3>
+                    <p class="text-sm text-gray-400">Proses meninjau seluruh footage untuk memilah klip layak pakai (<em>good take</em>) dan klip gagal (<em>bad take</em>).</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">📝</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Metadata & Notes</h3>
+                    <p class="text-sm text-gray-400">Memberi label, catatan, dan marker pada klip untuk memudahkan navigasi saat proses editing berlangsung.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🎬</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Rough Cut</h3>
+                    <p class="text-sm text-gray-400">Versi pertama penyuntingan — menyusun klip terpilih di timeline sesuai urutan naskah, tanpa efek atau transisi.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">⏱️</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Pacing Awal</h3>
+                    <p class="text-sm text-gray-400">Merasakan ritme dan durasi cerita secara kasar untuk memastikan alur narasi berjalan logis sebelum penyempurnaan.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simulator Timeline Editing -->
+        <section id="simulator" class="bg-gradient-to-br from-luxury-800 to-luxury-900 rounded-2xl p-8 border border-luxury-gold/20">
+            <h2 class="font-serif text-2xl font-bold text-white mb-2 flex items-center gap-3">
+                <span class="text-3xl">🎛️</span> Simulator Timeline Editing
+            </h2>
+            <p class="text-gray-400 text-sm mb-6">Amati bagaimana klip-klip video, audio, musik, dan efek disusun di timeline. Klik tombol preset untuk melihat berbagai skenario editing.</p>
+
+            <div class="space-y-6">
+                <!-- Kontrol Preset -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <button onclick="setPreset('organized')" class="timeline-btn active bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">📁 Terorganisir</button>
+                    <button onclick="setPreset('chaos')" class="timeline-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🌪️ Chaos</button>
+                    <button onclick="setPreset('roughcut')" class="timeline-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🎬 Rough Cut</button>
+                    <button onclick="setPreset('logged')" class="timeline-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">✅ Logged</button>
+                </div>
+
+                <!-- Timeline Visual -->
+                <div class="timeline-container">
+                    <!-- Ruler -->
+                    <div class="timeline-ruler">
+                        <span style="position:absolute; left:0%;">00:00</span>
+                        <span style="position:absolute; left:20%;">00:30</span>
+                        <span style="position:absolute; left:40%;">01:00</span>
+                        <span style="position:absolute; left:60%;">01:30</span>
+                        <span style="position:absolute; left:80%;">02:00</span>
+                        <span style="position:absolute; right:0;">02:30</span>
+                    </div>
+
+                    <!-- Playhead -->
+                    <div class="playhead" id="playhead" style="left: 0%;"></div>
+
+                    <!-- Tracks -->
+                    <div class="timeline-track" id="trackVideo" style="margin-left: 60px;">
+                        <span class="track-label">📹 VIDEO</span>
+                    </div>
+                    <div class="timeline-track" id="trackAudio" style="margin-left: 60px;">
+                        <span class="track-label">🎤 DIALOG</span>
+                    </div>
+                    <div class="timeline-track" id="trackMusic" style="margin-left: 60px;">
+                        <span class="track-label">🎵 MUSIK</span>
+                    </div>
+                    <div class="timeline-track" id="trackSFX" style="margin-left: 60px;">
+                        <span class="track-label">💥 SFX</span>
+                    </div>
+                    <div class="timeline-track" id="trackTitle" style="margin-left: 60px;">
+                        <span class="track-label">📝 TITLE</span>
+                    </div>
+                </div>
+
+                <!-- Info -->
+                <div id="presetInfo" class="bg-luxury-900 p-4 rounded-lg border border-luxury-gold/20">
+                    <p class="text-sm font-bold text-luxury-gold mb-1" id="presetTitle">📁 Struktur Terorganisir</p>
+                    <p class="text-xs text-gray-400" id="presetDesc">Semua file telah dipindahkan dari kartu memori dan dikelompokkan ke dalam folder berdasarkan Scene. Klip telah di-logging dan ditandai mana yang layak pakai (hijau) dan mana yang gagal (merah). Timeline siap untuk rough cut.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Struktur Folder Visual -->
+        <section class="bg-luxury-800 rounded-2xl p-8 border border-luxury-gold/10">
+            <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">📂 Contoh Struktur Folder Proyek Profesional</h3>
+            <div class="folder-tree">
+<pre>📁 <span class="folder">PROYEK_VIDEO_DKV_2026/</span>
+├── 📁 <span class="folder">01_FOOTAGE/</span>
+│   ├── 📁 <span class="folder">Scene_01_Intro/</span>
+│   │   ├── 🎬 <span class="good">SHOT_01_Take01.mp4</span> ✅
+│   │   ├── 🎬 <span class="good">SHOT_01_Take02.mp4</span> ✅
+│   │   └── 🎬 <span class="bad">SHOT_01_Take03.mp4</span> ❌ (blur)
+│   ├── 📁 <span class="folder">Scene_02_Interview/</span>
+│   └── 📁 <span class="folder">Scene_03_BRoll/</span>
+├── 📁 <span class="folder">02_AUDIO/</span>
+│   ├── 📁 <span class="folder">Dialog/</span>
+│   ├── 📁 <span class="folder">Music/</span>
+│   ├── 📁 <span class="folder">SFX/</span>
+│   └── 📁 <span class="folder">Room_Tone/</span>
+├── 📁 <span class="folder">03_GRAFIS/</span>
+│   ├── 📁 <span class="folder">Logo/</span>
+│   ├── 📁 <span class="folder">Lower_Third/</span>
+│   └── 📁 <span class="folder">Subtitle/</span>
+├── 📁 <span class="folder">04_DOKUMEN/</span>
+│   ├── 📄 <span class="file">Naskah_Final.pdf</span>
+│   ├── 📄 <span class="file">Storyboard.pdf</span>
+│   └── 📄 <span class="file">Shot_List.xlsx</span>
+├── 📁 <span class="folder">05_PROJECT_FILES/</span>
+│   └── 🎞️ <span class="file">Project_Utama.prproj</span>
+├── 📁 <span class="folder">06_EXPORT/</span>
+│   ├── 📁 <span class="folder">Draft/</span>
+│   └── 📁 <span class="folder">Final/</span>
+└── 📁 <span class="folder">07_BACKUP/</span>
+    └── 💾 <span class="file">Backup_2026-10-07.zip</span></pre>
+            </div>
+            <p class="text-xs text-gray-500 mt-3">✅ = Good Take (layak pakai) | ❌ = Bad Take (dibuang saat logging)</p>
+        </section>
+
+        <!-- Studi Kasus -->
+        <section class="bg-red-900/10 border border-red-500/20 rounded-2xl p-8">
+            <h3 class="font-serif text-xl font-bold text-red-400 mb-4 flex items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                📖 Studi Kasus: Editing yang Terhambat Karena File Chaos
+            </h3>
+            <p class="text-gray-300 mb-4">
+                Seorang siswa DKV memiliki 200 file video hasil syuting selama 3 hari. Ia langsung membuka software editing dan memasukkan SEMUA file ke dalam satu folder bernama "FINAL_BANGET" di desktop. Tanpa logging, ia mencoba mencari klip tertentu di antara 200 file yang namanya acak (DCIM_0001.mp4, DCIM_0002.mp4, dst). Setelah 4 jam mencari-cari, ia menyerah dan memulai ulang proyek dari nol. Waktu terbuang sia-sia, deadline mepet, dan stres meningkat.
+            </p>
+            <div class="bg-luxury-900/50 p-4 rounded-lg border-l-2 border-red-500">
+                <p class="text-sm text-gray-300"><strong class="text-red-400">Pembelajaran:</strong> Manajemen aset yang buruk adalah "pembunuh waktu" terbesar dalam editing. Editor profesional menghabiskan 20-30% waktu mereka hanya untuk mengorganisir file. Struktur folder yang rapi, logging yang disiplin, dan backup rutin adalah investasi yang akan menghemat waktu berlipat ganda di tahap editing berikutnya.</p>
+            </div>
+        </section>
+
+        <!-- Refleksi -->
+        <section class="bg-luxury-800 rounded-2xl p-8 border border-luxury-gold/10">
+            <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">💭 Refleksi untuk Siswa DKV</h3>
+            <p class="text-gray-300 leading-relaxed">
+                Di SMKN 1 Koto Balingka, Anda mungkin bekerja dengan storage yang terbatas. Namun, prinsip manajemen aset tetap sama — bahkan lebih penting ketika ruang penyimpanan terbatas. Gunakan hardisk eksternal untuk backup, dan biasakan membuat struktur folder standar untuk SETIAP proyek, tidak peduli seberapa kecil proyek tersebut. Disiplin di tahap ini akan membedakan Anda dari editor amatir. Ingat: <em class="text-luxury-gold">"Editor yang baik bukan yang paling cepat, tapi yang paling terorganisir."</em>
+            </p>
+        </section>
+
+        <!-- Detail Materi -->
+        <section class="space-y-8">
+            <h2 class="font-serif text-2xl font-bold text-white border-b border-luxury-gold/20 pb-2">Uraian Materi Lengkap</h2>
+            
+            <div class="space-y-8">
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">1. Data Management (Pengelolaan Data)</h3>
+                    <p class="text-gray-300 mb-3">Langkah pertama pasca-produksi adalah mengamankan dan mengorganisir semua file yang direkam di lapangan:</p>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Transfer File:</strong> Memindahkan semua file dari kartu memori (SD Card, CFexpress) ke komputer menggunakan card reader — <em>jangan</em> langsung dari kamera via kabel USB karena rawan putus di tengah jalan.</li>
+                        <li><strong>Verifikasi:</strong> Cek apakah semua file berhasil ditransfer dengan membandingkan jumlah file dan ukuran total di kartu memori vs di komputer.</li>
+                        <li><strong>Struktur Folder Standar:</strong> Buat folder proyek dengan subfolder terorganisir (Footage, Audio, Grafis, Dokumen, Project Files, Export, Backup).</li>
+                        <li><strong>Penamaan File:</strong> Ubah nama file dari default kamera (DCIM_0001.mp4) menjadi nama yang bermakna (Scene01_Shot01_Take02.mp4).</li>
+                        <li><strong>Backup 3-2-1 Rule:</strong> Simpan 3 salinan data, di 2 media berbeda, dengan 1 salinan di lokasi berbeda (cloud/offsite).</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">2. Bin Organization (Pengelompokan di Software)</h3>
+                    <p class="text-gray-300 mb-3">Di dalam software editing (Adobe Premiere, DaVinci Resolve, Final Cut), file dikelompokkan ke dalam "Bin" (folder virtual):</p>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Organisasi by Scene:</strong> Setiap scene dari naskah memiliki bin sendiri. Contoh: Scene_01_Intro, Scene_02_Interview, Scene_03_BRoll.</li>
+                        <li><strong>Organisasi by Shot Type:</strong> Dikelompokkan berdasarkan jenis shot. Contoh: WS_Shots, MS_Shots, CU_Shots.</li>
+                        <li><strong>Organisasi by Take:</strong> Untuk adegan dengan banyak take, kelompokkan berdasarkan nomor take.</li>
+                        <li><strong>Color Labeling:</strong> Gunakan warna untuk menandai status klip (hijau = good take, merah = bad take, kuning = perlu review).</li>
+                        <li><strong>Smart Bin:</strong> Fitur otomatis di beberapa software yang mengelompokkan klip berdasarkan metadata (tanggal, durasi, resolusi).</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">3. Logging (Proses Pemilahan Klip)</h3>
+                    <p class="text-gray-300 mb-3">Logging adalah proses meninjau seluruh footage untuk memilah klip yang layak pakai:</p>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Menonton Seluruh Footage:</strong> Putar setiap klip dari awal hingga akhir — jangan hanya melihat thumbnail, karena bisa menipu.</li>
+                        <li><strong>Menandai In/Out Point:</strong> Tentukan titik awal (In) dan akhir (Out) dari bagian klip yang akan digunakan.</li>
+                        <li><strong>Memberi Rating:</strong> Beri bintang (⭐⭐⭐⭐⭐) atau label warna untuk menunjukkan kualitas klip.</li>
+                        <li><strong>Mencatat Catatan:</strong> Tambahkan catatan seperti "audio sedikit noise", "fokus bagus tapi exposure kurang", "take terbaik untuk dialog".</li>
+                        <li><strong>Memisahkan Good Take vs Bad Take:</strong>
+                            <ul class="list-circle list-inside ml-6 mt-1 text-gray-400">
+                                <li><strong>Good Take:</strong> Fokus tajam, exposure benar, audio jernih, aksi sesuai naskah.</li>
+                                <li><strong>Bad Take:</strong> Blur, out of focus, over/underexposed, audio rusak, talent salah dialog, kamera goyang.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">4. Metadata & Marker</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Metadata:</strong> Informasi tersembunyi di dalam file (tanggal rekam, durasi, resolusi, codec, frame rate). Bisa dilihat di properties file.</li>
+                        <li><strong>Marker:</strong> Penanda di timeline untuk menandai momen penting (beat musik, titik cut, dialog kunci, cue efek suara).</li>
+                        <li><strong>Keyword/Tag:</strong> Label teks untuk memudahkan pencarian klip di library yang besar (misal: "interview", "outdoor", "senja").</li>
+                        <li><strong>Proxy Editing:</strong> Membuat versi resolusi rendah dari footage 4K untuk mempercepat editing di komputer spesifikasi rendah, lalu kembali ke footage asli saat rendering.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">5. Rough Cut (Penyuntingan Kasar)</h3>
+                    <p class="text-gray-300 mb-3">Rough cut adalah versi pertama dari editing — kerangka cerita yang akan disempurnakan di tahap berikutnya:</p>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Definisi:</strong> Menyusun klip-klip terpilih (hasil logging) ke dalam timeline sesuai urutan naskah, TANPA menggunakan efek, transisi, color grading, atau audio mixing.</li>
+                        <li><strong>Tujuan:</strong>
+                            <ul class="list-circle list-inside ml-6 mt-1 text-gray-400">
+                                <li>Memastikan alur cerita berjalan logis dari awal hingga akhir.</li>
+                                <li>Mengecek durasi total video — apakah sesuai target?</li>
+                                <li>Mengidentifikasi klip yang hilang atau perlu reshoot.</li>
+                                <li>Merasakan ritme (pacing) cerita secara kasar.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Karakteristik Rough Cut:</strong>
+                            <ul class="list-circle list-inside ml-6 mt-1 text-gray-400">
+                                <li>Masih kasar — banyak cut yang "kaku" atau timing yang belum pas.</li>
+                                <li>Belum ada color grading (masih warna asli kamera).</li>
+                                <li>Audio belum di-mix (masih level asli rekaman).</li>
+                                <li>Belum ada transisi fancy (hanya hard cut).</li>
+                                <li>Belum ada titling, subtitle, atau VFX.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Proses Pembuatan:</strong>
+                            <ol class="list-decimal list-inside ml-6 mt-1 text-gray-400">
+                                <li>Buka naskah/storyboard sebagai panduan.</li>
+                                <li>Drag klip dari bin ke timeline sesuai urutan scene.</li>
+                                <li>Trim (potong) bagian yang tidak perlu di awal/akhir klip.</li>
+                                <li>Atur urutan klip jika dirasa lebih logis.</li>
+                                <li>Tonton keseluruhan rough cut dari awal hingga akhir.</li>
+                                <li>Catat bagian yang perlu diperbaiki untuk fine cut.</li>
+                            </ol>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">6. Software Editing Populer</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🎬 Adobe Premiere Pro</p>
+                            <p class="text-xs text-gray-400">Standar industri film & TV. Fitur lengkap, integrasi dengan After Effects & Audition. Berbayar (subscription).</p>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🎨 DaVinci Resolve</p>
+                            <p class="text-xs text-gray-400">Terbaik untuk color grading. Versi gratis sangat powerful. Populer di industri film independen.</p>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🍎 Final Cut Pro</p>
+                            <p class="text-xs text-gray-400">Eksklusif macOS. Sangat cepat dan intuitif. Populer di kalangan YouTuber dan filmmaker Apple.</p>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🆓 CapCut / VN</p>
+                            <p class="text-xs text-gray-400">Aplikasi mobile/desktop gratis. Cocok untuk pemula dan konten media sosial. Fitur terbatas tapi mudah digunakan.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tips Praktis -->
+        <section class="bg-gradient-to-r from-luxury-gold/10 to-transparent p-6 rounded-xl border-l-4 border-luxury-gold">
+            <h3 class="font-bold text-white mb-3">💡 Tips Praktis Manajemen Aset & Rough Cut</h3>
+            <ul class="space-y-2 text-sm text-gray-300">
+                <li>✅ Buat template struktur folder standar — gunakan kembali untuk setiap proyek baru agar konsisten.</li>
+                <li>✅ Lakukan logging SEGERA setelah transfer file — jangan ditunda, karena Anda masih ingat konteks syuting.</li>
+                <li>✅ Tonton footage dengan kecepatan 1.5x atau 2x untuk mempercepat proses logging.</li>
+                <li>✅ Gunakan keyboard shortcut untuk In/Out point dan marker — ini menghemat waktu drastis.</li>
+                <li>✅ Simpan proyek setiap 10-15 menit, atau aktifkan auto-save di software editing.</li>
+                <li>✅ Jangan langsung melakukan color grading atau audio mixing di tahap rough cut — fokus pada alur cerita dulu.</li>
+                <li>✅ Tonton rough cut Anda dari awal hingga akhir tanpa pause — catat kesan pertama sebagai penonton.</li>
+                <li>✅ Backup proyek file (.prproj, .drp, .fcpbundle) secara terpisah dari footage.</li>
+            </ul>
+        </section>
+
+        <!-- Kesimpulan & Daftar Pustaka -->
+        <section class="border-t border-luxury-gold/10 pt-8">
+            <h3 class="font-serif text-xl font-bold text-white mb-4">Kesimpulan</h3>
+            <p class="text-gray-300 mb-6">
+                Manajemen aset dan penyuntingan kasar adalah fondasi yang menentukan efisiensi seluruh proses pasca-produksi. Editor yang disiplin dalam mengorganisir file, melakukan logging, dan menyusun rough cut yang solid akan menghemat waktu berlipat ganda di tahap fine cut, color grading, dan audio mixing. Sebaliknya, editor yang mengabaikan tahap ini akan terjebak dalam chaos file, kehilangan waktu mencari klip, dan menghasilkan karya akhir yang terburu-buru. Ingat: <strong class="text-luxury-gold">"Rough cut yang baik adalah 50% dari pekerjaan editing selesai."</strong>
+            </p>
+            <h3 class="font-serif text-lg font-bold text-luxury-gold mb-3">📚 Daftar Pustaka</h3>
+            <ul class="text-sm text-gray-400 space-y-1 list-disc list-inside">
+                <li>Dancyger, K. (2013). <em>The Technique of Film and Video Editing: History, Theory, and Practice</em> (5th ed.). Burlington: Focal Press.</li>
+                <li>Hull, J. (2011). <em>The Filmmaker's Guide to Final Cut Pro Workflow</em>. Berkeley: Apress.</li>
+                <li>Roberts, R., & Saez, A. (2016). <em>Edit Like You Mean It: An Insider's Guide to Working as a Video Editor</em>. Michael Wiese Productions.</li>
+                <li>Supriadi. (2024). <em>Produksi Multimedia untuk SMK DKV</em>. Bukittinggi: FTIK UIN Bukittinggi.</li>
+            </ul>
+        </section>
+
+    </main>
+
+    <!-- UJI FORMATIF -->
+    <section id="uji-formatif" class="bg-luxury-800 py-16 border-t border-luxury-gold/20">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="text-center mb-10">
+                <h2 class="font-serif text-3xl font-bold text-white mb-2">📋 Uji Formatif Pertemuan 9</h2>
+                <p class="text-gray-400">Materi: Data Management, Logging, Bin Organization, dan Rough Cut</p>
+                <p class="text-sm text-red-400 mt-2 font-semibold">⚠️ Mohon lengkapi semua data dan jawaban terlebih dahulu!</p>
+            </div>
+
+            <form id="quizForm" class="glass rounded-2xl p-6 md:p-10 space-y-8 quiz-container max-h-[800px] overflow-y-auto">
+                
+                <!-- Data Siswa -->
+                <div class="space-y-4 border-b border-luxury-gold/20 pb-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">📋 Data Siswa</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Nama Lengkap</label>
+                            <input type="text" id="nama" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* NIS</label>
+                            <input type="text" id="nis" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Tanggal</label>
+                            <input type="date" id="tanggal" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Kelas</label>
+                            <select id="kelas" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                                <option value="">Pilih Kelas</option>
+                                <option value="XII DKV 1">XII DKV 1</option>
+                                <option value="XII DKV 2">XII DKV 2</option>
+                                <option value="XII DKV 3">XII DKV 3</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian A: Pilihan Ganda -->
+                <div class="space-y-6 border-b border-luxury-gold/20 pb-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">📋 Bagian A – Pilihan Ganda (Skor 10/soal)</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">1. Proses memindahkan file video dan audio dari kartu memori ke komputer dengan struktur folder yang rapi disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="a" class="accent-luxury-gold"> a. Rendering</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="b" class="accent-luxury-gold"> b. Data Management</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="c" class="accent-luxury-gold"> c. Color Grading</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="d" class="accent-luxury-gold"> d. Audio Mixing</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">2. Dalam software editing, folder virtual untuk mengelompokkan klip disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="a" class="accent-luxury-gold"> a. Timeline</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="b" class="accent-luxury-gold"> b. Bin</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="c" class="accent-luxury-gold"> c. Sequence</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="d" class="accent-luxury-gold"> d. Export</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">3. Proses meninjau seluruh footage untuk memilah klip layak pakai dan klip gagal disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="a" class="accent-luxury-gold"> a. Rendering</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="b" class="accent-luxury-gold"> b. Logging</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="c" class="accent-luxury-gold"> c. Mastering</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="d" class="accent-luxury-gold"> d. Foley</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">4. Versi pertama penyuntingan yang menyusun klip terpilih di timeline tanpa efek atau transisi disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="a" class="accent-luxury-gold"> a. Fine Cut</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="b" class="accent-luxury-gold"> b. Rough Cut</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="c" class="accent-luxury-gold"> c. Final Cut</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="d" class="accent-luxury-gold"> d. Master Cut</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">5. Aturan backup "3-2-1 Rule" berarti...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="a" class="accent-luxury-gold"> a. 3 file, 2 folder, 1 komputer</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="b" class="accent-luxury-gold"> b. 3 salinan data, di 2 media berbeda, dengan 1 salinan di lokasi berbeda</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="c" class="accent-luxury-gold"> c. 3 hari backup, 2 jam sekali, 1 kali seminggu</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="d" class="accent-luxury-gold"> d. 3 software, 2 hardisk, 1 cloud</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">6. Penanda di timeline untuk menandai momen penting (beat musik, titik cut, cue efek) disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="a" class="accent-luxury-gold"> a. Clip</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="b" class="accent-luxury-gold"> b. Marker</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="c" class="accent-luxury-gold"> c. Transition</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="d" class="accent-luxury-gold"> d. Effect</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">7. Teknik membuat versi resolusi rendah dari footage 4K untuk mempercepat editing di komputer spesifikasi rendah disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="a" class="accent-luxury-gold"> a. Proxy Editing</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="b" class="accent-luxury-gold"> b. Rough Cut</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="c" class="accent-luxury-gold"> c. Rendering</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="d" class="accent-luxury-gold"> d. Color Grading</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">8. Manakah yang BUKAN merupakan karakteristik Rough Cut?</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="a" class="accent-luxury-gold"> a. Belum ada color grading</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="b" class="accent-luxury-gold"> b. Belum ada transisi fancy</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="c" class="accent-luxury-gold"> c. Sudah ada audio mixing sempurna</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="d" class="accent-luxury-gold"> d. Belum ada VFX</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">9. Software editing yang terkenal sebagai standar industri film & TV dan memiliki integrasi dengan After Effects adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="a" class="accent-luxury-gold"> a. DaVinci Resolve</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="b" class="accent-luxury-gold"> b. Final Cut Pro</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="c" class="accent-luxury-gold"> c. Adobe Premiere Pro</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="d" class="accent-luxury-gold"> d. CapCut</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">10. Tujuan utama pembuatan Rough Cut adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="a" class="accent-luxury-gold"> a. Menghasilkan video final siap tayang</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="b" class="accent-luxury-gold"> b. Memastikan alur cerita logis dan mengecek durasi total sebelum penyempurnaan</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="c" class="accent-luxury-gold"> c. Menambahkan efek visual dan color grading</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="d" class="accent-luxury-gold"> d. Mengunggah video ke media sosial</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian B: Essay -->
+                <div class="space-y-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">✍️ Bagian B – Essay (Skor 20/soal)</h3>
+                    <p class="text-sm text-gray-400">Jawablah pertanyaan berikut dengan jelas dan terstruktur.</p>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">1. Jelaskan secara komprehensif apa yang dimaksud dengan Data Management dalam pasca-produksi, dan mengapa tahap ini sangat krusial sebelum memulai editing!</p>
+                            <textarea name="essay1" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">2. Deskripsikan proses Logging secara detail, termasuk langkah-langkah yang dilakukan editor dan kriteria untuk menentukan Good Take vs Bad Take!</p>
+                            <textarea name="essay2" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">3. Jelaskan perbedaan antara Bin Organization di software editing dengan struktur folder di komputer! Mengapa keduanya sama-sama penting?</p>
+                            <textarea name="essay3" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">4. Apa yang dimaksud dengan Rough Cut? Jelaskan tujuan, karakteristik, dan proses pembuatannya secara bertahap!</p>
+                            <textarea name="essay4" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">5. Berdasarkan studi kasus "Editing yang Terhambat Karena File Chaos" di atas, rancanglah solusi lengkap (struktur folder, teknik logging, dan workflow) yang seharusnya dilakukan siswa tersebut untuk menghindari masalah yang sama!</p>
+                            <textarea name="essay5" rows="4" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi -->
+                <div class="pt-6 border-t border-luxury-gold/20 space-y-4">
+                    <button type="button" onclick="hitungNilai()" class="w-full bg-luxury-gold text-luxury-900 font-bold py-3 rounded-lg hover:bg-yellow-400 transition shadow-lg">
+                        ✉️ KIRIM JAWABAN & LIHAT HASIL
+                    </button>
+                    
+                    <div id="hasilNilai" class="hidden bg-luxury-900 p-6 rounded-xl border border-luxury-gold/30 text-center space-y-4">
+                        <h4 class="text-xl font-bold text-white">📊 Hasil Uji Formatif</h4>
+                        <div class="text-4xl font-serif font-bold text-luxury-gold" id="skorTotal">0</div>
+                        <p class="text-sm text-gray-400" id="detailSkor">Bagian A (PG): 0/100 | Bagian B (Essay): Dinilai Manual oleh Guru</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-4">
+                            <button type="button" onclick="alert('Simulasi: File PDF lengkap sedang diunduh...')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">📥 UNDUH PDF LENGKAP</button>
+                            <button type="button" onclick="alert('Simulasi: File skor sedang diunduh...')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">📊 UNDUH SKOR SAJA</button>
+                            <button type="button" onclick="alert('Simulasi: Email telah dikirim ke ausianggina@gmail.com')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">✉️ KIRIM EMAIL GURU</button>
+                        </div>
+                        <button type="button" onclick="location.reload()" class="text-sm text-gray-400 hover:text-white underline mt-4">🔄 MULAI ULANG</button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-luxury-900 border-t border-luxury-gold/10 py-8 text-center">
+        <p class="text-gray-500 text-sm">© 2026 AUSI ANGGINA, S.Pd — SMKN 1 KOTO BALINGKA. All rights reserved.</p>
+    </footer>
+
+    <!-- Script Simulator & Uji Formatif -->
+    <script>
+        // === SIMULATOR TIMELINE ===
+        const presets = {
+            organized: {
+                title: '📁 Struktur Terorganisir',
+                desc: 'Semua file telah dipindahkan dari kartu memori dan dikelompokkan ke dalam folder berdasarkan Scene. Klip telah di-logging dan ditandai mana yang layak pakai (hijau) dan mana yang gagal (merah). Timeline siap untuk rough cut.',
+                tracks: {
+                    video: ['🎬 Scene01_WS', '🎬 Scene01_MS', '🎬 Scene02_CU', '🎬 Scene02_WS', '🎬 Scene03_BRoll'],
+                    audio: ['🎤 Dialog_Scene01', '🎤 Dialog_Scene02', '🎤 Dialog_Scene03'],
+                    music: ['🎵 OST_Intro', '🎵 OST_Main'],
+                    sfx: ['💥 SFX_Door', '💥 SFX_Footstep'],
+                    title: ['📝 Opening_Title']
+                }
+            },
+            chaos: {
+                title: '🌪️ File Chaos (SALAH)',
+                desc: '⚠️ SEMUA file dicampur dalam satu folder tanpa struktur. Nama file acak (DCIM_0001.mp4). Tidak ada logging, tidak ada pemilahan good/bad take. Editor akan kesulitan mencari klip tertentu di antara ratusan file.',
+                tracks: {
+                    video: ['🎬 DCIM_0001', '🎬 DCIM_0042', '🎬 DCIM_0127', '🎬 DCIM_0089', '🎬 DCIM_0201', '🎬 DCIM_0055'],
+                    audio: ['🎤 AUDIO_01', '🎤 AUDIO_07', '🎤 AUDIO_03', '🎤 AUDIO_12'],
+                    music: ['🎵 song1.mp3', '🎵 track_final(2).mp3', '🎵 music_backup'],
+                    sfx: ['💥 sfx1', '💥 sound_new', '💥 fx(1)'],
+                    title: ['📝 title_v1', '📝 title_FINAL_BANGET']
+                }
+            },
+            roughcut: {
+                title: '🎬 Rough Cut (Kerangka Cerita)',
+                desc: 'Klip-klip terpilih (hasil logging) telah disusun di timeline sesuai urutan naskah. Belum ada efek, transisi, color grading, atau audio mixing. Ini adalah kerangka cerita pertama yang akan disempurnakan di tahap Fine Cut.',
+                tracks: {
+                    video: ['🎬 Scene01_Take02', '🎬 Scene01_Take01', '🎬 Scene02_Take03', '🎬 Scene03_BRoll_01'],
+                    audio: ['🎤 Dialog_Scene01', '🎤 Dialog_Scene02', '🎤 Dialog_Scene03'],
+                    music: ['🎵 OST_Full_2min'],
+                    sfx: ['💥 SFX_Door', '💥 SFX_Footstep', '💥 SFX_Ambience'],
+                    title: ['📝 Opening_Title', '📝 LowerThird_Narasumber']
+                }
+            },
+            logged: {
+                title: '✅ Hasil Logging (Good vs Bad)',
+                desc: 'Klip telah ditinjau satu per satu. Klip hijau (✅) adalah Good Take yang akan digunakan di rough cut. Klip merah (❌) adalah Bad Take yang akan dibuang. Proses logging menghemat waktu editing drastis.',
+                tracks: {
+                    video: ['🎬 Scene01_Take02 ✅', '🎬 Scene01_Take03 ❌', '🎬 Scene01_Take01 ✅', '🎬 Scene02_Take01 ❌', '🎬 Scene02_Take03 ✅'],
+                    audio: ['🎤 Dialog_Clean ✅', '🎤 Dialog_Noisy ❌', '🎤 Dialog_Good ✅'],
+                    music: ['🎵 OST_Approved ✅', '🎵 OST_WrongMood ❌'],
+                    sfx: ['💥 SFX_Clear ✅', '💥 SFX_Corrupt ❌'],
+                    title: ['📝 Title_Final ✅', '📝 Title_Draft ❌']
+                }
+            }
+        };
+
+        function setPreset(type) {
+            const preset = presets[type];
+            
+            // Update info
+            document.getElementById('presetTitle').innerText = preset.title;
+            document.getElementById('presetDesc').innerText = preset.desc;
+
+            // Update tracks
+            const tracks = ['video', 'audio', 'music', 'sfx', 'title'];
+            const trackIds = ['trackVideo', 'trackAudio', 'trackMusic', 'trackSFX', 'trackTitle'];
+            const clipClasses = ['video', 'audio', 'music', 'sfx', 'title'];
+
+            tracks.forEach((track, idx) => {
+                const trackEl = document.getElementById(trackIds[idx]);
+                const label = trackEl.querySelector('.track-label').outerHTML;
+                trackEl.innerHTML = label;
+
+                preset.tracks[track].forEach(clipName => {
+                    const clipEl = document.createElement('div');
+                    let clipClass = clipClasses[idx];
+                    
+                    // Special styling for bad takes
+                    if (clipName.includes('❌')) {
+                        clipClass = 'bad-take';
+                    }
+                    
+                    clipEl.className = `clip ${clipClass}`;
+                    clipEl.innerText = clipName;
+                    trackEl.appendChild(clipEl);
+                });
+            });
+
+            // Update active button
+            document.querySelectorAll('.timeline-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Animate playhead
+            animatePlayhead();
+        }
+
+        function animatePlayhead() {
+            const playhead = document.getElementById('playhead');
+            let pos = 0;
+            const interval = setInterval(() => {
+                pos += 2;
+                if (pos > 100) pos = 0;
+                playhead.style.left = pos + '%';
+                if (pos >= 100) clearInterval(interval);
+            }, 50);
+        }
+
+        // Inisialisasi
+        window.addEventListener('load', () => {
+            setPreset('organized');
+        });
+
+        // === UJI FORMATIF ===
+        function hitungNilai() {
+            const nama = document.getElementById('nama').value;
+            const nis = document.getElementById('nis').value;
+            const tanggal = document.getElementById('tanggal').value;
+            const kelas = document.getElementById('kelas').value;
+
+            if (!nama || !nis || !tanggal || !kelas) {
+                alert("⚠️ Mohon lengkapi semua Data Siswa terlebih dahulu!");
+                return;
+            }
+
+            const kunciJawaban = {
+                q1: 'b',  // Data Management
+                q2: 'b',  // Bin
+                q3: 'b',  // Logging
+                q4: 'b',  // Rough Cut
+                q5: 'b',  // 3 salinan, 2 media, 1 lokasi berbeda
+                q6: 'b',  // Marker
+                q7: 'a',  // Proxy Editing
+                q8: 'c',  // Sudah ada audio mixing sempurna (BUKAN karakteristik rough cut)
+                q9: 'c',  // Adobe Premiere Pro
+                q10: 'b'  // Memastikan alur cerita logis
+            };
+
+            let skorPG = 0;
+            let terjawab = 0;
+
+            for (let i = 1; i <= 10; i++) {
+                const jawaban = document.querySelector(`input[name="q${i}"]:checked`);
+                if (jawaban) {
+                    terjawab++;
+                    if (jawaban.value === kunciJawaban[`q${i}`]) {
+                        skorPG += 10;
+                    }
+                }
+            }
+
+            if (terjawab < 10) {
+                alert(`⚠️ Mohon lengkapi semua 10 soal pilihan ganda terlebih dahulu! (Baru terjawab ${terjawab})`);
+                return;
+            }
+
+            let essayKosong = false;
+            for (let i = 1; i <= 5; i++) {
+                if (document.querySelector(`textarea[name="essay${i}"]`).value.trim() === "") {
+                    essayKosong = true;
+                    break;
+                }
+            }
+
+            if (essayKosong) {
+                alert("⚠️ Mohon isi semua 5 soal essay terlebih dahulu!");

@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pertemuan 15: Ekspor Berkas Akhir (Rendering & Mastering)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        luxury: {
+                            900: '#0B0F19',
+                            800: '#151B2B',
+                            700: '#1E293B',
+                            gold: '#D4AF37',
+                            goldLight: '#F3E5AB',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(21, 27, 43, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #D4AF37 0%, #F3E5AB 50%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hover-lift {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px -5px rgba(212, 175, 55, 0.15);
+        }
+        .quiz-container::-webkit-scrollbar { width: 8px; }
+        .quiz-container::-webkit-scrollbar-track { background: #151B2B; }
+        .quiz-container::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 4px; }
+
+        /* Export Simulator */
+        .export-stage {
+            background: linear-gradient(135deg, #0B0F19 0%, #151B2B 100%);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 12px;
+            padding: 24px;
+            position: relative;
+        }
+        .file-preview {
+            aspect-ratio: 16/9;
+            background: linear-gradient(135deg, #1E293B 0%, #0B0F19 100%);
+            border-radius: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .file-icon {
+            font-size: 64px;
+            opacity: 0.3;
+            transition: all 0.5s ease;
+        }
+        .file-icon.rendering {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        .file-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(212, 175, 55, 0.9);
+            color: #0B0F19;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .progress-bar {
+            height: 8px;
+            background: #0B0F19;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 16px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #D4AF37 0%, #F3E5AB 50%, #D4AF37 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 20px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .spec-card {
+            background: rgba(11, 15, 25, 0.6);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            transition: all 0.3s ease;
+        }
+        .spec-card:hover {
+            border-color: rgba(212, 175, 55, 0.5);
+        }
+        .spec-label {
+            font-size: 10px;
+            color: #9CA3AF;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .spec-value {
+            font-size: 14px;
+            color: #D4AF37;
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+        .platform-btn {
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .platform-btn.active {
+            background: #D4AF37 !important;
+            color: #0B0F19 !important;
+            border-color: #D4AF37 !important;
+        }
+        .platform-btn.active::before {
+            content: '✓';
+            position: absolute;
+            top: 4px;
+            right: 6px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        /* Codec Comparison */
+        .codec-bar {
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
+            transition: width 0.8s ease;
+            position: relative;
+        }
+        .codec-size {
+            position: absolute;
+            right: 8px;
+            font-family: monospace;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body class="bg-luxury-900 text-gray-200 font-sans antialiased selection:bg-luxury-gold selection:text-luxury-900">
+
+    <!-- Navigasi -->
+    <nav class="fixed w-full z-50 glass border-b border-luxury-gold/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <a href="index.html" class="font-serif text-lg font-semibold text-white tracking-wide hover:text-luxury-gold transition">
+                        ← Kembali ke Beranda
+                    </a>
+                </div>
+                <div class="hidden md:flex space-x-6 text-sm font-medium">
+                    <a href="#materi" class="hover:text-luxury-gold transition">Materi</a>
+                    <a href="#simulator" class="hover:text-luxury-gold transition">Simulator</a>
+                    <a href="#uji-formatif" class="px-4 py-2 bg-luxury-gold text-luxury-900 font-bold rounded-full hover:bg-yellow-400 transition">Uji Formatif</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Materi -->
+    <header class="pt-32 pb-16 bg-gradient-to-b from-luxury-800 to-luxury-900 border-b border-luxury-gold/10">
+        <div class="max-w-5xl mx-auto px-4 text-center">
+            <span class="inline-block px-4 py-1 rounded-full border border-luxury-gold/30 bg-luxury-gold/10 text-luxury-gold text-xs font-bold tracking-widest uppercase mb-4">
+                Pertemuan 15 dari 16
+            </span>
+            <h1 class="font-serif text-4xl md:text-5xl font-bold text-white mb-6">
+                Ekspor Berkas Akhir: <br><span class="gold-gradient-text">Rendering & Mastering</span>
+            </h1>
+            <p class="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
+                Tahap final pasca-produksi — mengubah timeline editing menjadi file video utuh yang siap didistribusi ke berbagai platform (YouTube, TV, Bioskop, Media Sosial) dengan kualitas teknis optimal sesuai standar industri.
+            </p>
+            <div class="mt-8 flex justify-center gap-4">
+                <a href="14.html" class="text-sm text-gray-400 hover:text-luxury-gold transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    Bab Sebelumnya
+                </a>
+                <span class="text-gray-600">|</span>
+                <a href="16.html" class="text-sm text-luxury-gold hover:text-white transition flex items-center gap-2 font-semibold">
+                    UAS (Pertemuan 16)
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Konten Utama -->
+    <main id="materi" class="max-w-5xl mx-auto px-4 py-16 space-y-16">
+
+        <!-- Pendahuluan -->
+        <section class="glass rounded-2xl p-8 md:p-10 border-l-4 border-luxury-gold">
+            <h2 class="font-serif text-2xl font-bold text-white mb-4">Pendahuluan</h2>
+            <p class="text-gray-300 leading-relaxed mb-4">
+                Anda telah melewati perjalanan panjang: dari pra-produksi, produksi, editing, color grading, audio mixing, hingga VFX. Semua kerja keras itu akan sia-sia jika tahap terakhir — <strong class="text-luxury-gold">Rendering & Mastering</strong> — dilakukan dengan salah. Video yang telah di-grade dengan sempurna bisa terlihat buruk jika di-export dengan codec yang salah. Audio yang telah di-mix dengan presisi bisa terdistorsi jika bitrate-nya terlalu rendah.
+            </p>
+            <p class="text-gray-300 leading-relaxed">
+                Pertemuan ini adalah "gerbang terakhir" sebelum karya Anda dilihat dunia. Anda akan mempelajari perbedaan mendasar antara <strong class="text-luxury-gold">rendering</strong> (proses teknis mengubah timeline menjadi file) dan <strong class="text-luxury-gold">mastering</strong> (proses strategis menentukan format, codec, resolusi, dan kualitas akhir sesuai platform distribusi). Anda juga akan memahami "bahasa rahasia" industri video: codec (H.264, H.265, ProRes), container (MP4, MOV, MKV), bitrate, color space, dan standar loudness — semua parameter teknis yang membedakan video amatir dengan video profesional.
+            </p>
+        </section>
+
+        <!-- Konsep Kunci -->
+        <section>
+            <h2 class="font-serif text-2xl font-bold text-luxury-gold mb-6 flex items-center gap-3">
+                <span class="text-3xl">🔑</span> Konsep Kunci
+            </h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">⚙️</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Rendering</h3>
+                    <p class="text-sm text-gray-400">Proses komputasi menggabungkan seluruh elemen (video, audio, efek, teks) di timeline menjadi satu file video utuh.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">💿</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Mastering</h3>
+                    <p class="text-sm text-gray-400">Proses strategis menentukan format, codec, resolusi, dan kualitas akhir sesuai platform distribusi target.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🎞️</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Codec Video</h3>
+                    <p class="text-sm text-gray-400">Algoritma kompresi video (H.264, H.265, ProRes, DNxHD) yang menentukan kualitas dan ukuran file.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">📦</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Container</h3>
+                    <p class="text-sm text-gray-400">Format file pembungkus (.MP4, .MOV, .MKV, .AVI) yang menampung video, audio, dan metadata.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">📊</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Bitrate</h3>
+                    <p class="text-sm text-gray-400">Jumlah data per detik (Mbps). Semakin tinggi = kualitas lebih baik, ukuran file lebih besar.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🌈</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Color Space</h3>
+                    <p class="text-sm text-gray-400">Ruang warna (Rec.709 untuk HD, Rec.2020 untuk HDR, DCI-P3 untuk bioskop) yang menentukan gamut warna.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simulator Export Settings -->
+        <section id="simulator" class="bg-gradient-to-br from-luxury-800 to-luxury-900 rounded-2xl p-8 border border-luxury-gold/20">
+            <h2 class="font-serif text-2xl font-bold text-white mb-2 flex items-center gap-3">
+                <span class="text-3xl">🎛️</span> Simulator Export Settings
+            </h2>
+            <p class="text-gray-400 text-sm mb-6">Pilih platform distribusi untuk melihat parameter export yang direkomendasikan. Perhatikan bagaimana setiap platform memiliki kebutuhan teknis yang berbeda.</p>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- File Preview -->
+                <div>
+                    <div class="export-stage">
+                        <div class="file-preview">
+                            <div class="file-icon" id="fileIcon">🎬</div>
+                            <div class="file-badge" id="fileBadge">MP4</div>
+                            <div class="absolute bottom-3 left-3 text-xs text-gray-500 font-mono" id="fileName">video_final.mp4</div>
+                        </div>
+                        <div class="progress-bar mt-4">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="flex justify-between mt-2 text-xs text-gray-500">
+                            <span id="progressText">Siap untuk render</span>
+                            <span id="fileSize">~0 MB</span>
+                        </div>
+                    </div>
+                    <button onclick="simulateRender()" class="w-full mt-4 bg-luxury-gold text-luxury-900 font-bold py-3 rounded-lg hover:bg-yellow-400 transition">
+                        ▶️ SIMULASI RENDER
+                    </button>
+                </div>
+
+                <!-- Spesifikasi -->
+                <div class="space-y-4">
+                    <p class="text-sm font-bold text-luxury-gold">Pilih Platform Distribusi:</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setPlatform('youtube')" class="platform-btn active bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">📺 YouTube</button>
+                        <button onclick="setPlatform('tv')" class="platform-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">📡 TV Broadcast</button>
+                        <button onclick="setPlatform('cinema')" class="platform-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🎬 Bioskop</button>
+                        <button onclick="setPlatform('instagram')" class="platform-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">📱 Instagram</button>
+                        <button onclick="setPlatform('tiktok')" class="platform-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🎵 TikTok</button>
+                        <button onclick="setPlatform('archive')" class="platform-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">💾 Master Archive</button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="spec-card">
+                            <div class="spec-label">Format</div>
+                            <div class="spec-value" id="specFormat">.MP4</div>
+                        </div>
+                        <div class="spec-card">
+                            <div class="spec-label">Video Codec</div>
+                            <div class="spec-value" id="specCodec">H.264</div>
+                        </div>
+                        <div class="spec-card">
+                            <div class="spec-label">Resolusi</div>
+                            <div class="spec-value" id="specRes">1920×1080</div>
+                        </div>
+                        <div class="spec-card">
+                            <div class="spec-label">Frame Rate</div>
+                            <div class="spec-value" id="specFps">30 fps</div>
+                        </div>
+                        <div class="spec-card">
+                            <div class="spec-label">Video Bitrate</div>
+                            <div class="spec-value" id="specBitrate">10 Mbps</div>
+                        </div>
+                        <div class="spec-card">
+                            <div class="spec-label">Audio Codec</div>
+                            <div class="spec-value" id="specAudio">AAC 320 kbps</div>
+                        </div>
+                        <div class="spec-card">
+                            <div class="spec-label">Color Space</div>
+                            <div class="spec-value" id="specColor">Rec.709</div>
+                        </div>
+                        <div class="spec-card">
+                            <div class="spec-label">Loudness</div>
+                            <div class="spec-value" id="specLoud">-14 LUFS</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-luxury-900 p-4 rounded-lg border border-luxury-gold/20">
+                        <p class="text-sm font-bold text-luxury-gold mb-1" id="platTitle">📺 YouTube</p>
+                        <p class="text-xs text-gray-400" id="platDesc">Platform video terbesar di dunia. Menerima upload hingga 8K, namun sebagian besar penonton menonton di 1080p. Rekomendasi: H.264, 1080p atau 4K, bitrate tinggi, AAC audio, -14 LUFS.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Visualisasi Perbandingan Codec -->
+        <section class="bg-luxury-800 rounded-2xl p-8 border border-luxury-gold/10">
+            <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">📊 Perbandingan Ukuran File: Codec untuk Video 1 Menit 1080p</h3>
+            <p class="text-sm text-gray-400 mb-6">Perhatikan bagaimana codec yang berbeda menghasilkan ukuran file yang sangat berbeda untuk kualitas visual yang serupa:</p>
+            
+            <div class="space-y-3">
+                <div>
+                    <div class="flex justify-between text-xs text-gray-400 mb-1">
+                        <span class="font-bold text-white">ProRes 422 HQ (Editing/Archive)</span>
+                        <span>~1.5 GB</span>
+                    </div>
+                    <div class="w-full bg-luxury-900 rounded h-6 overflow-hidden">
+                        <div class="codec-bar" style="width: 100%; background: linear-gradient(90deg, #EF4444, #991B1B);">
+                            <span class="codec-size">100%</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs text-gray-400 mb-1">
+                        <span class="font-bold text-white">DNxHR HQ (Editing/Archive)</span>
+                        <span>~1.2 GB</span>
+                    </div>
+                    <div class="w-full bg-luxury-900 rounded h-6 overflow-hidden">
+                        <div class="codec-bar" style="width: 80%; background: linear-gradient(90deg, #F59E0B, #D97706);">
+                            <span class="codec-size">80%</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs text-gray-400 mb-1">
+                        <span class="font-bold text-white">H.264 High (YouTube Standard)</span>
+                        <span>~150 MB</span>
+                    </div>
+                    <div class="w-full bg-luxury-900 rounded h-6 overflow-hidden">
+                        <div class="codec-bar" style="width: 10%; background: linear-gradient(90deg, #10B981, #047857);">
+                            <span class="codec-size">10%</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs text-gray-400 mb-1">
+                        <span class="font-bold text-white">H.265/HEVC (4K Efficient)</span>
+                        <span>~90 MB</span>
+                    </div>
+                    <div class="w-full bg-luxury-900 rounded h-6 overflow-hidden">
+                        <div class="codec-bar" style="width: 6%; background: linear-gradient(90deg, #3B82F6, #1E40AF);">
+                            <span class="codec-size">6%</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs text-gray-400 mb-1">
+                        <span class="font-bold text-white">AV1 (Next-Gen Open Source)</span>
+                        <span>~70 MB</span>
+                    </div>
+                    <div class="w-full bg-luxury-900 rounded h-6 overflow-hidden">
+                        <div class="codec-bar" style="width: 5%; background: linear-gradient(90deg, #8B5CF6, #6D28D9);">
+                            <span class="codec-size">5%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-4">💡 Codec editing (ProRes, DNxHR) = kualitas maksimal, ukuran besar, untuk workflow editing. Codec distribusi (H.264, H.265, AV1) = kualitas baik, ukuran kecil, untuk publikasi.</p>
+        </section>
+
+        <!-- Studi Kasus -->
+        <section class="bg-red-900/10 border border-red-500/20 rounded-2xl p-8">
+            <h3 class="font-serif text-xl font-bold text-red-400 mb-4 flex items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                📖 Studi Kasus: Video 4K yang "Ditolak" YouTube
+            </h3>
+            <p class="text-gray-300 mb-4">
+                Seorang siswa DKV merender video dokumenter berdurasi 10 menit dalam format ProRes 422 HQ (format editing profesional) dengan resolusi 4K. Ukuran file: 30 GB. Ia langsung mengupload ke YouTube. Setelah menunggu 5 jam, YouTube menampilkan pesan error: "Upload gagal — file terlalu besar untuk diproses." Selain itu, saat ia mencoba memutar file di laptop temannya yang menggunakan Windows, file tidak bisa dibuka karena Windows tidak memiliki codec ProRes secara default.
+            </p>
+            <div class="bg-luxury-900/50 p-4 rounded-lg border-l-2 border-red-500">
+                <p class="text-sm text-gray-300"><strong class="text-red-400">Pembelajaran:</strong> (1) ProRes adalah codec EDITING/ARCHIVE, bukan untuk distribusi. (2) Untuk YouTube, gunakan H.264 atau H.265 dalam container MP4. (3) Selalu render dua versi: <em>Master Archive</em> (ProRes/DNxHR untuk backup) dan <em>Distribution</em> (H.264 MP4 untuk upload). (4) Cek spesifikasi platform target SEBELUM render — jangan render dulu baru cek. (5) Untuk video 10 menit 1080p di YouTube, cukup H.264 bitrate 10-15 Mbps — ukuran file hanya 700 MB-1 GB, mudah diupload dan diproses.</p>
+            </div>
+        </section>
+
+        <!-- Refleksi -->
+        <section class="bg-luxury-800 rounded-2xl p-8 border border-luxury-gold/10">
+            <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">💭 Refleksi untuk Siswa DKV</h3>
+            <p class="text-gray-300 leading-relaxed">
+                Di SMKN 1 Koto Balingka, Anda mungkin menggunakan komputer dengan spesifikasi terbatas. Rendering video 4K bisa memakan waktu sangat lama. Solusinya: (1) Render di resolusi 1080p dulu untuk review, baru render 4K untuk final. (2) Gunakan proxy editing (seperti yang dipelajari di Pertemuan 9) untuk mempercepat workflow. (3) Render di malam hari saat komputer tidak dipakai. (4) Gunakan H.265/HEVC untuk ukuran file lebih kecil dengan kualitas setara H.264. Ingat: <em class="text-luxury-gold">"Rendering yang tepat di awal akan menghemat waktu berjam-jam di akhir."</em>
+            </p>
+        </section>
+
+        <!-- Detail Materi -->
+        <section class="space-y-8">
+            <h2 class="font-serif text-2xl font-bold text-white border-b border-luxury-gold/20 pb-2">Uraian Materi Lengkap</h2>
+            
+            <div class="space-y-8">
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">1. Rendering vs Mastering: Dua Konsep Berbeda</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">⚙️ Rendering (Teknis)</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li>Proses komputasi menggabungkan semua elemen timeline</li>
+                                <li>Menerapkan efek, transisi, color grade</li>
+                                <li>Menggabungkan video + audio + teks</li>
+                                <li>Menghasilkan file video final</li>
+                                <li>Bisa memakan waktu menit hingga jam</li>
+                                <li> Bergantung pada spesifikasi komputer</li>
+                            </ul>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">💿 Mastering (Strategis)</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li>Proses menentukan spesifikasi output</li>
+                                <li>Memilih codec, container, resolusi</li>
+                                <li>Menentukan bitrate dan kualitas</li>
+                                <li>Menyesuaikan dengan platform target</li>
+                                <li>Memastikan standar teknis terpenuhi</li>
+                                <li>Strategis — berdasarkan tujuan distribusi</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">2. Codec Video: Jantung Kompresi Digital</h3>
+                    <p class="text-gray-300 mb-3">Codec (Coder-Decoder) adalah algoritma yang mengkompresi video agar ukuran file lebih kecil tanpa (banyak) mengurangi kualitas visual:</p>
+                    <div class="space-y-4">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎞️ Codec untuk Editing & Archive (Lossless / Low Compression)</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>Apple ProRes (422, 422 HQ, 4444):</strong> Standar industri Apple. Kualitas nyaris lossless, ukuran besar. Digunakan di Final Cut Pro, Premiere Pro.</li>
+                                <li><strong>Avid DNxHR / DNxHD:</strong> Standar industri Avid. Setara ProRes untuk ekosistem Windows. DNxHR untuk UHD, DNxHD untuk HD.</li>
+                                <li><strong>CineForm:</strong> Codec wavelet-based, efisien untuk 3D dan HDR.</li>
+                                <li><strong>Use:</strong> Editing, color grading, arsip master. JANGAN untuk distribusi.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📦 Codec untuk Distribusi (Lossy / High Compression)</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>H.264 / AVC:</strong> Codec paling universal. Didukung semua perangkat dan platform. Kompromi terbaik kualitas/ukuran.</li>
+                                <li><strong>H.265 / HEVC:</strong> Penerus H.264. 50% lebih efisien pada kualitas sama. Ideal untuk 4K. Butuh lisensi (royalti).</li>
+                                <li><strong>AV1:</strong> Codec open-source terbaru. 30% lebih efisien dari H.265. Didukung YouTube, Netflix. Belum didukung semua perangkat lama.</li>
+                                <li><strong>VP9:</strong> Codec Google untuk YouTube. Open-source, efisien, tetapi kurang didukung di luar ekosistem Google.</li>
+                                <li><strong>Use:</strong> Upload ke YouTube, Instagram, TikTok, TV, distribusi umum.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">3. Container Format: Pembungkus File</h3>
+                    <p class="text-gray-300 mb-3">Container adalah format file yang "membungkus" video, audio, subtitle, dan metadata. Container yang berbeda bisa menampung codec yang sama:</p>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📦 MP4 (.mp4)</h4>
+                            <p class="text-sm text-gray-300 mb-2">Container paling universal. Didukung semua platform dan perangkat.</p>
+                            <p class="text-xs text-gray-400"><strong>Codec yang didukung:</strong> H.264, H.265, AV1, AAC, MP3<br><strong>Use:</strong> YouTube, web, mobile, distribusi umum.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎬 MOV (.mov)</h4>
+                            <p class="text-sm text-gray-300 mb-2">Container Apple. Kualitas tinggi, mendukung alpha channel.</p>
+                            <p class="text-xs text-gray-400"><strong>Codec yang didukung:</strong> ProRes, H.264, H.265<br><strong>Use:</strong> Editing di Mac, arsip master, broadcast.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎭 MKV (.mkv)</h4>
+                            <p class="text-sm text-gray-300 mb-2">Container open-source. Mendukung banyak audio track & subtitle.</p>
+                            <p class="text-xs text-gray-400"><strong>Codec yang didukung:</strong> H.264, H.265, VP9, FLAC<br><strong>Use:</strong> Film dengan multi-subtitle, arsip pribadi.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📼 AVI (.avi)</h4>
+                            <p class="text-sm text-gray-300 mb-2">Container lama Microsoft. Kurang efisien, tidak mendukung fitur modern.</p>
+                            <p class="text-xs text-gray-400"><strong>Use:</strong> Kompatibilitas dengan perangkat lama. Hindari untuk produksi baru.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">4. Resolusi & Aspect Ratio</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>4K UHD (3840×2160):</strong> Standar baru untuk konten premium. 4x lebih detail dari 1080p.</li>
+                        <li><strong>Full HD (1920×1080):</strong> Standar paling umum. Cocok untuk YouTube, TV, presentasi.</li>
+                        <li><strong>HD (1280×720):</strong> Untuk koneksi internet lambat atau perangkat lama.</li>
+                        <li><strong>2K DCI (2048×1080):</strong> Standar bioskop digital.</li>
+                        <li><strong>4K DCI (4096×2160):</strong> Standar bioskop digital premium.</li>
+                    </ul>
+                    <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/20 mt-3">
+                        <p class="text-sm text-gray-300"><strong class="text-luxury-gold">Aspect Ratio per Platform:</strong><br>
+                        • YouTube/TV: 16:9 (landscape)<br>
+                        • Instagram Feed: 1:1 (square) atau 4:5 (portrait)<br>
+                        • Instagram/TikTok Reels & Stories: 9:16 (vertical)<br>
+                        • Bioskop: 1.85:1 atau 2.39:1 (widescreen)</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">5. Bitrate: Kualitas vs Ukuran</h3>
+                    <p class="text-gray-300 mb-3">Bitrate (Mbps = Megabit per detik) menentukan jumlah data yang diproses per detik. Semakin tinggi bitrate, semakin baik kualitas, tetapi semakin besar file:</p>
+                    <div class="bg-luxury-900/50 p-5 rounded-lg border border-luxury-gold/20">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-luxury-gold border-b border-luxury-gold/20">
+                                    <th class="text-left py-2">Resolusi</th>
+                                    <th class="text-left py-2">Bitrate Rekomendasi (H.264)</th>
+                                    <th class="text-left py-2">Ukuran per Menit</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-300">
+                                <tr class="border-b border-luxury-gold/10">
+                                    <td class="py-2">720p HD</td>
+                                    <td class="py-2 font-mono text-luxury-gold">5-8 Mbps</td>
+                                    <td class="py-2">~40-60 MB</td>
+                                </tr>
+                                <tr class="border-b border-luxury-gold/10">
+                                    <td class="py-2">1080p Full HD</td>
+                                    <td class="py-2 font-mono text-luxury-gold">10-15 Mbps</td>
+                                    <td class="py-2">~75-110 MB</td>
+                                </tr>
+                                <tr class="border-b border-luxury-gold/10">
+                                    <td class="py-2">1440p 2K</td>
+                                    <td class="py-2 font-mono text-luxury-gold">16-24 Mbps</td>
+                                    <td class="py-2">~120-180 MB</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2">2160p 4K</td>
+                                    <td class="py-2 font-mono text-luxury-gold">35-68 Mbps</td>
+                                    <td class="py-2">~260-510 MB</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/20 mt-3">
+                        <p class="text-sm text-gray-300"><strong class="text-luxury-gold">CBR vs VBR:</strong><br>
+                        • <strong>CBR (Constant Bitrate):</strong> Bitrate tetap sepanjang video. Ukuran file bisa diprediksi, kualitas kurang optimal.<br>
+                        • <strong>VBR (Variable Bitrate):</strong> Bitrate berubah sesuai kompleksitas scene. Kualitas lebih baik, ukuran file tidak bisa diprediksi persis. <em>Rekomendasi untuk distribusi.</em><br>
+                        • <strong>VBR 2-Pass:</strong> Rendering 2x — pertama analisis, kedua encoding. Kualitas terbaik, waktu render 2x lebih lama.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">6. Frame Rate untuk Distribusi</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>24 fps:</strong> Standar sinematik. Untuk film pendek, video artistik, konten premium.</li>
+                        <li><strong>25 fps:</strong> Standar TV Eropa (PAL). Untuk broadcast di Eropa, Indonesia.</li>
+                        <li><strong>30 fps:</strong> Standar YouTube, NTSC (Amerika). Paling umum untuk konten online.</li>
+                        <li><strong>50 fps:</strong> Untuk slow motion (diputar 2x lebih lambat di 25 fps timeline).</li>
+                        <li><strong>60 fps:</strong> Untuk gaming, olahraga, vlog. Gerakan sangat halus.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">7. Color Space & HDR</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🌈 Color Space (SDR)</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>Rec.709:</strong> Standar untuk HD/Full HD. Wajib untuk YouTube, TV broadcast.</li>
+                                <li><strong>sRGB:</strong> Standar web. Untuk konten yang akan dilihat di browser.</li>
+                                <li><strong>DCI-P3:</strong> Standar bioskop digital. Gamut lebih luas dari Rec.709.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">✨ HDR (High Dynamic Range)</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>Rec.2020 / BT.2020:</strong> Color space untuk HDR. Gamut sangat luas.</li>
+                                <li><strong>HDR10:</strong> Format HDR statis. Didukung Netflix, YouTube, Blu-ray 4K.</li>
+                                <li><strong>Dolby Vision:</strong> Format HDR dinamis. Kualitas terbaik, butuh lisensi.</li>
+                                <li><strong>HLG:</strong> HDR untuk broadcast TV. Kompatibel dengan TV SDR.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">8. Audio Codec & Loudness per Platform</h3>
+                    <div class="bg-luxury-900/50 p-5 rounded-lg border border-luxury-gold/20">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-luxury-gold border-b border-luxury-gold/20">
+                                    <th class="text-left py-2">Platform</th>
+                                    <th class="text-left py-2">Audio Codec</th>
+                                    <th class="text-left py-2">Loudness</th>
+                                    <th class="text-left py-2">True Peak</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-300">
+                                <tr class="border-b border-luxury-gold/10">
+                                    <td class="py-2">📺 YouTube</td>
+                                    <td class="py-2">AAC 320 kbps</td>
+                                    <td class="py-2 font-mono text-luxury-gold">-14 LUFS</td>
+                                    <td class="py-2">-1 dBTP</td>
+                                </tr>
+                                <tr class="border-b border-luxury-gold/10">
+                                    <td class="py-2">📡 TV Broadcast (Indonesia)</td>
+                                    <td class="py-2">PCM / AAC</td>
+                                    <td class="py-2 font-mono text-luxury-gold">-24 LUFS</td>
+                                    <td class="py-2">-2 dBTP</td>
+                                </tr>
+                                <tr class="border-b border-luxury-gold/10">
+                                    <td class="py-2">🎬 Bioskop</td>
+                                    <td class="py-2">PCM 24-bit</td>
+                                    <td class="py-2 font-mono text-luxury-gold">-22 LUFS</td>
+                                    <td class="py-2">N/A</td>
+                                </tr>
+                                <tr class="border-b border-luxury-gold/10">
+                                    <td class="py-2">📱 Instagram/TikTok</td>
+                                    <td class="py-2">AAC 256 kbps</td>
+                                    <td class="py-2 font-mono text-luxury-gold">-14 LUFS</td>
+                                    <td class="py-2">-1 dBTP</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2">🎧 Spotify/Podcast</td>
+                                    <td class="py-2">AAC / MP3 320</td>
+                                    <td class="py-2 font-mono text-luxury-gold">-14 LUFS</td>
+                                    <td class="py-2">-1 dBTP</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">9. Spesifikasi Lengkap per Platform</h3>
+                    <div class="space-y-4">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📺 YouTube</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>Container:</strong> MP4</li>
+                                <li><strong>Video Codec:</strong> H.264 (paling kompatibel) atau H.265</li>
+                                <li><strong>Resolusi:</strong> 1080p (1920×1080) atau 4K (3840×2160)</li>
+                                <li><strong>Frame Rate:</strong> Sama dengan source (24/25/30/60 fps)</li>
+                                <li><strong>Bitrate:</strong> 10 Mbps (1080p SDR), 35-68 Mbps (4K SDR)</li>
+                                <li><strong>Audio:</strong> AAC-LC, 320 kbps, 48 kHz</li>
+                                <li><strong>Color Space:</strong> Rec.709 (SDR) atau Rec.2020 (HDR)</li>
+                                <li><strong>Loudness:</strong> -14 LUFS integrated</li>
+                                <li><strong>Max Upload:</strong> 256 GB atau 12 jam</li>
+                            </ul>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📡 TV Broadcast (Indonesia - Standar KPI)</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>Container:</strong> MOV atau MXF</li>
+                                <li><strong>Video Codec:</strong> ProRes 422 HQ atau DNxHR HQ</li>
+                                <li><strong>Resolusi:</strong> 1920×1080 (Full HD)</li>
+                                <li><strong>Frame Rate:</strong> 25 fps (PAL Indonesia)</li>
+                                <li><strong>Bitrate:</strong> 50-220 Mbps (bergantung codec)</li>
+                                <li><strong>Audio:</strong> PCM 24-bit, 48 kHz, stereo atau 5.1</li>
+                                <li><strong>Color Space:</strong> Rec.709</li>
+                                <li><strong>Loudness:</strong> -24 LUFS (EBU R128) atau -24 LKFS (ATSC A/85)</li>
+                                <li><strong>True Peak:</strong> -2 dBTP</li>
+                            </ul>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎬 Bioskop (DCP - Digital Cinema Package)</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>Container:</strong> DCP (JPEG2000-based)</li>
+                                <li><strong>Resolusi:</strong> 2K (2048×1080) atau 4K (4096×2160)</li>
+                                <li><strong>Frame Rate:</strong> 24 fps (standar bioskop)</li>
+                                <li><strong>Aspect Ratio:</strong> 1.85:1 (flat) atau 2.39:1 (scope)</li>
+                                <li><strong>Audio:</strong> PCM 24-bit, 48 kHz, 5.1 atau 7.1 surround</li>
+                                <li><strong>Color Space:</strong> DCI-P3</li>
+                                <li><strong>Note:</strong> Membutuhkan software khusus (Wraptor DCP, easyDCP)</li>
+                            </ul>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📱 Instagram (Feed, Reels, Stories)</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>Container:</strong> MP4 (H.264)</li>
+                                <li><strong>Resolusi Feed:</strong> 1080×1080 (square) atau 1080×1350 (4:5 portrait)</li>
+                                <li><strong>Resolusi Reels/Stories:</strong> 1080×1920 (9:16 vertical)</li>
+                                <li><strong>Frame Rate:</strong> 30 fps</li>
+                                <li><strong>Bitrate:</strong> 5-8 Mbps (Instagram akan kompresi ulang)</li>
+                                <li><strong>Audio:</strong> AAC 128-256 kbps</li>
+                                <li><strong>Max Durasi:</strong> Feed 60 detik, Reels 90 detik, Stories 15 detik/slide</li>
+                            </ul>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎵 TikTok</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>Container:</strong> MP4 (H.264) atau MOV</li>
+                                <li><strong>Resolusi:</strong> 1080×1920 (9:16 vertical)</li>
+                                <li><strong>Frame Rate:</strong> 30 fps atau 60 fps</li>
+                                <li><strong>Bitrate:</strong> 8-12 Mbps</li>
+                                <li><strong>Audio:</strong> AAC 128-256 kbps</li>
+                                <li><strong>Max Durasi:</strong> 10 menit</li>
+                                <li><strong>Tip:</strong> Render di 1080p, JANGAN 4K — TikTok akan kompresi dan hasilnya lebih buruk</li>
+                            </ul>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">💾 Master Archive (Backup Profesional)</h4>
+                            <ul class="text-sm text-gray-300 space-y-1 ml-4 list-disc list-inside">
+                                <li><strong>Container:</strong> MOV (ProRes) atau MXF (DNxHR)</li>
+                                <li><strong>Video Codec:</strong> ProRes 422 HQ atau ProRes 4444 (jika ada alpha)</li>
+                                <li><strong>Resolusi:</strong> Sama dengan source (biasanya 4K jika direkam 4K)</li>
+                                <li><strong>Frame Rate:</strong> Sama dengan source</li>
+                                <li><strong>Audio:</strong> PCM 24-bit, 48 kHz (uncompressed)</li>
+                                <li><strong>Color Space:</strong> Sama dengan source (log atau Rec.709)</li>
+                                <li><strong>Use:</strong> Arsip master untuk keperluan di masa depan (re-edit, re-grade, distribusi ke platform baru)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">10. Metadata & SEO untuk Video</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Metadata Internal:</strong> Informasi yang disematkan di dalam file video (judul, pembuat, tahun, copyright, deskripsi).</li>
+                        <li><strong>Manfaat:</strong> Membantu organisasi file, hak cipta, dan pencarian.</li>
+                        <li><strong>SEO YouTube:</strong>
+                            <ul class="list-circle list-inside ml-6 mt-1 text-gray-400">
+                                <li>Judul yang mengandung kata kunci (maksimal 60 karakter)</li>
+                                <li>Deskripsi detail (minimal 250 kata) dengan kata kunci natural</li>
+                                <li>Tags relevan (10-15 tags)</li>
+                                <li>Thumbnail custom yang menarik (1280×720)</li>
+                                <li>Caption/subtitle untuk aksesibilitas dan SEO</li>
+                                <li>Timestamps/chapters untuk navigasi</li>
+                            </ul>
+                        </li>
+                        <li><strong>Hashtag Media Sosial:</strong> Gunakan 3-5 hashtag relevan di Instagram/TikTok untuk meningkatkan discoverability.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">11. Quality Control (QC) Sebelum Distribusi</h3>
+                    <p class="text-gray-300 mb-3">Sebelum mengupload atau mendistribusikan video, lakukan quality control menyeluruh:</p>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Cek Visual:</strong> Putar dari awal hingga akhir — cari glitch, frame hitam, artefak kompresi, color banding.</li>
+                        <li><strong>Cek Audio:</strong> Dengarkan dengan headphone — cari noise, clipping, sinkronisasi audio-video.</li>
+                        <li><strong>Cek di Berbagai Perangkat:</strong> TV, laptop, smartphone, tablet — pastikan tampil baik di semua layar.</li>
+                        <li><strong>Cek Loudness:</strong> Gunakan LUFS meter untuk memastikan sesuai standar platform.</li>
+                        <li><strong>Cek Subtitle:</strong> Pastikan timing tepat, tidak ada typo, mudah dibaca.</li>
+                        <li><strong>Cek Metadata:</strong> Pastikan judul, deskripsi, tag sudah benar.</li>
+                        <li><strong>Cek Thumbnail:</strong> Pastikan menarik dan sesuai konten.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">12. Backup & Archiving Strategy</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Aturan 3-2-1:</strong> 3 salinan data, di 2 media berbeda, 1 di lokasi berbeda (cloud/offsite).</li>
+                        <li><strong>Struktur Folder Arsip:</strong>
+                            <ul class="list-circle list-inside ml-6 mt-1 text-gray-400">
+                                <li><code>PROYEK_NAMA/</code></li>
+                                <li><code>├── 01_MASTER/</code> (ProRes/DNxHR master file)</li>
+                                <li><code>├── 02_DISTRIBUTION/</code> (MP4 H.264 untuk upload)</li>
+                                <li><code>├── 03_PROJECT_FILES/</code> (file project editing)</li>
+                                <li><code>├── 04_FOOTAGE/</code> (footage asli)</li>
+                                <li><code>├── 05_AUDIO/</code> (musik, SFX, dialog)</li>
+                                <li><code>├── 06_GRAFIS/</code> (logo, lower third, VFX)</li>
+                                <li><code>└── 07_DOKUMENTASI/</code> (naskah, storyboard, kontrak)</li>
+                            </ul>
+                        </li>
+                        <li><strong>Media Backup:</strong> Hardisk eksternal (HDD untuk arsip dingin, SSD untuk arsip aktif), NAS untuk backup otomatis, Cloud (Google Drive, Dropbox, Backblaze) untuk offsite.</li>
+                        <li><strong>Verifikasi Backup:</strong> Rutin cek apakah backup bisa dibuka dan diputar — backup yang tidak bisa dipulihkan sama dengan tidak ada backup.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">13. Software Rendering & Mastering</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🎬 Adobe Media Encoder</p>
+                            <p class="text-xs text-gray-400">Standalone rendering app dari Adobe. Queue multiple exports, preset lengkap, integrasi Premiere Pro & After Effects.</p>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🎨 DaVinci Resolve (Deliver Page)</p>
+                            <p class="text-xs text-gray-400">Halaman Deliver di Resolve sangat powerful. Preset untuk YouTube, Vimeo, broadcast, DCP. Versi gratis sudah lengkap.</p>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🍎 Apple Compressor</p>
+                            <p class="text-xs text-gray-400">Standalone encoding app dari Apple. Integrasi Final Cut Pro. Preset untuk Apple devices, broadcast, streaming.</p>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🆓 HandBrake</p>
+                            <p class="text-xs text-gray-400">Gratis, open-source. Converter video universal. Cocok untuk konversi batch dan kompresi file.</p>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🎯 FFmpeg</p>
+                            <p class="text-xs text-gray-400">Command-line tool paling powerful. Digunakan oleh YouTube, Netflix di backend. Untuk pengguna advanced.</p>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">📱 CapCut Desktop / VN</p>
+                            <p class="text-xs text-gray-400">Untuk ekspor cepat ke media sosial. Preset otomatis untuk TikTok, Instagram, YouTube Shorts.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tips Praktis -->
+        <section class="bg-gradient-to-r from-luxury-gold/10 to-transparent p-6 rounded-xl border-l-4 border-luxury-gold">
+            <h3 class="font-bold text-white mb-3">💡 Tips Praktis Rendering & Mastering</h3>
+            <ul class="space-y-2 text-sm text-gray-300">
+                <li>✅ Selalu render 2 versi: <em>Master Archive</em> (ProRes/DNxHR) untuk backup, dan <em>Distribution</em> (H.264 MP4) untuk upload.</li>
+                <li>✅ Cek spesifikasi platform target SEBELUM render — jangan render dulu baru menyesal.</li>
+                <li>✅ Gunakan VBR (Variable Bitrate) untuk distribusi — kualitas lebih baik daripada CBR.</li>
+                <li>✅ Untuk YouTube, render di 1080p atau 4K — YouTube akan kompresi ulang apapun yang Anda upload.</li>
+                <li>✅ Untuk Instagram/TikTok, render di 1080p JANGAN 4K — platform akan kompresi dan hasilnya lebih buruk.</li>
+                <li>✅ Pastikan audio sudah di-master ke loudness standar platform (-14 LUFS untuk YouTube, -24 LUFS untuk TV).</li>
+                <li>✅ Gunakan Rec.709 untuk distribusi standar — Rec.2020 hanya jika target HDR.</li>
+                <li>✅ Tambahkan metadata (judul, pembuat, copyright) di file final untuk perlindungan hak cipta.</li>
+                <li>✅ Lakukan QC (quality control) menyeluruh sebelum distribusi — putar dari awal hingga akhir.</li>
+                <li>✅ Backup master file di minimal 2 lokasi berbeda (hardisk eksternal + cloud).</li>
+                <li>✅ Untuk rendering panjang, lakukan di malam hari atau gunakan komputer dengan spesifikasi tinggi.</li>
+                <li>✅ Gunakan proxy editing untuk mempercepat workflow jika komputer spesifikasi rendah.</li>
+            </ul>
+        </section>
+
+        <!-- Kesimpulan & Daftar Pustaka -->
+        <section class="border-t border-luxury-gold/10 pt-8">
+            <h3 class="font-serif text-xl font-bold text-white mb-4">Kesimpulan</h3>
+            <p class="text-gray-300 mb-6">
+                Rendering dan mastering adalah tahap final yang menentukan apakah karya audiovisual Anda akan ditampilkan dengan kualitas optimal atau justru rusak karena kesalahan teknis. Dengan memahami perbedaan antara codec editing (ProRes, DNxHR) dan codec distribusi (H.264, H.265, AV1), memilih container yang tepat (MP4, MOV), mengatur bitrate sesuai resolusi, menyesuaikan color space (Rec.709 untuk SDR, Rec.2020 untuk HDR), dan memenuhi standar loudness per platform, siswa DKV memiliki kemampuan yang setara dengan master engineer profesional. Ingatlah tiga prinsip emas mastering: <strong class="text-luxury-gold">(1) Kenali platform target Anda sebelum render.</strong> <strong class="text-luxury-gold">(2) Selalu simpan master archive berkualitas tinggi.</strong> <strong class="text-luxury-gold">(3) Quality control adalah kewajiban, bukan pilihan.</strong>
+            </p>
+            <h3 class="font-serif text-lg font-bold text-luxury-gold mb-3">📚 Daftar Pustaka</h3>
+            <ul class="text-sm text-gray-400 space-y-1 list-disc list-inside">
+                <li>Brown, B. (2013). <em>The Filmmaker's Handbook: A Comprehensive Guide for the Digital Age</em>. New York: Plume.</li>
+                <li>Clarke, P. (2016). <em>Video Engineering: Compression, Transmission, and Storage for the 21st Century</em> (3rd ed.). New York: McGraw-Hill.</li>
+                <li>Hubel, T. (2020). <em>The Filmmaker's Guide to Video Codecs and Containers</em>. Online resource.</li>
+                <li>Supriadi. (2024). <em>Produksi Multimedia untuk SMK DKV</em>. Bukittinggi: FTIK UIN Bukittinggi.</li>
+                <li>Wright, W. (2019). <em>Video Editing: A Postproduction Timeline for Film and Video</em>. New York: Allworth Press.</li>
+            </ul>
+        </section>
+
+    </main>
+
+    <!-- UJI FORMATIF -->
+    <section id="uji-formatif" class="bg-luxury-800 py-16 border-t border-luxury-gold/20">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="text-center mb-10">
+                <h2 class="font-serif text-3xl font-bold text-white mb-2">📋 Uji Formatif Pertemuan 15</h2>
+                <p class="text-gray-400">Materi: Rendering, Mastering, Codec, Container, Bitrate, Color Space, dan Standar Platform</p>
+                <p class="text-sm text-red-400 mt-2 font-semibold">⚠️ Mohon lengkapi semua data dan jawaban terlebih dahulu!</p>
+            </div>
+
+            <form id="quizForm" class="glass rounded-2xl p-6 md:p-10 space-y-8 quiz-container max-h-[800px] overflow-y-auto">
+                
+                <!-- Data Siswa -->
+                <div class="space-y-4 border-b border-luxury-gold/20 pb-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">📋 Data Siswa</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Nama Lengkap</label>
+                            <input type="text" id="nama" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* NIS</label>
+                            <input type="text" id="nis" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Tanggal</label>
+                            <input type="date" id="tanggal" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Kelas</label>
+                            <select id="kelas" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                                <option value="">Pilih Kelas</option>
+                                <option value="XII DKV 1">XII DKV 1</option>
+                                <option value="XII DKV 2">XII DKV 2</option>
+                                <option value="XII DKV 3">XII DKV 3</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian A: Pilihan Ganda -->
+                <div class="space-y-6 border-b border-luxury-gold/20 pb-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">📋 Bagian A – Pilihan Ganda (Skor 10/soal)</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">1. Proses komputasi menggabungkan seluruh elemen timeline (video, audio, efek, teks) menjadi satu file video utuh disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="a" class="accent-luxury-gold"> a. Mastering</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="b" class="accent-luxury-gold"> b. Rendering</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="c" class="accent-luxury-gold"> c. Encoding</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="d" class="accent-luxury-gold"> d. Compositing</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">2. Codec video yang PALING UNIVERSAL dan didukung oleh semua platform dan perangkat adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="a" class="accent-luxury-gold"> a. ProRes</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="b" class="accent-luxury-gold"> b. DNxHR</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="c" class="accent-luxury-gold"> c. H.264</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="d" class="accent-luxury-gold"> d. CineForm</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">3. Container file yang MENAMPUNG video, audio, dan metadata disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="a" class="accent-luxury-gold"> a. Codec</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="b" class="accent-luxury-gold"> b. Container (.MP4, .MOV, .MKV)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="c" class="accent-luxury-gold"> c. Bitrate</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="d" class="accent-luxury-gold"> d. Frame rate</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">4. Standar loudness audio untuk YouTube dan media sosial adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="a" class="accent-luxury-gold"> a. -24 LUFS</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="b" class="accent-luxury-gold"> b. -14 LUFS</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="c" class="accent-luxury-gold"> c. -6 LUFS</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="d" class="accent-luxury-gold"> d. 0 LUFS</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">5. Resolusi Full HD yang menjadi standar YouTube dan TV broadcast adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="a" class="accent-luxury-gold"> a. 1280×720</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="b" class="accent-luxury-gold"> b. 1920×1080</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="c" class="accent-luxury-gold"> c. 3840×2160</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="d" class="accent-luxury-gold"> d. 2048×1080</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">6. Color space standar untuk video HD/Full HD (SDR) yang wajib digunakan untuk YouTube dan TV broadcast adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="a" class="accent-luxury-gold"> a. Rec.709</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="b" class="accent-luxury-gold"> b. Rec.2020</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="c" class="accent-luxury-gold"> c. DCI-P3</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="d" class="accent-luxury-gold"> d. sRGB</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">7. Codec yang digunakan untuk EDITING dan ARCHIVE (bukan distribusi) karena kualitas nyaris lossless adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="a" class="accent-luxury-gold"> a. H.264</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="b" class="accent-luxury-gold"> b. H.265</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="c" class="accent-luxury-gold"> c. Apple ProRes</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="d" class="accent-luxury-gold"> d. AV1</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">8. Aspect ratio yang digunakan untuk Instagram Reels dan TikTok adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="a" class="accent-luxury-gold"> a. 16:9 (landscape)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="b" class="accent-luxury-gold"> b. 1:1 (square)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="c" class="accent-luxury-gold"> c. 9:16 (vertical)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="d" class="accent-luxury-gold"> d. 2.39:1 (widescreen)</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">9. Frame rate standar untuk konten sinematik (film bioskop) adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="a" class="accent-luxury-gold"> a. 24 fps</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="b" class="accent-luxury-gold"> b. 30 fps</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="c" class="accent-luxury-gold"> c. 50 fps</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="d" class="accent-luxury-gold"> d. 60 fps</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">10. Aturan backup "3-2-1" berarti...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="a" class="accent-luxury-gold"> a. 3 file, 2 folder, 1 komputer</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="b" class="accent-luxury-gold"> b. 3 salinan data, di 2 media berbeda, dengan 1 salinan di lokasi berbeda</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="c" class="accent-luxury-gold"> c. 3 hari backup, 2 jam sekali, 1 kali seminggu</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="d" class="accent-luxury-gold"> d. 3 software, 2 hardisk, 1 cloud</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian B: Essay -->
+                <div class="space-y-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">✍️ Bagian B – Essay (Skor 20/soal)</h3>
+                    <p class="text-sm text-gray-400">Jawablah pertanyaan berikut dengan jelas dan terstruktur.</p>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">1. Jelaskan perbedaan mendasar antara Rendering dan Mastering! Mengapa kedua proses ini sama-sama krusial dalam tahap akhir pasca-produksi?</p>
+                            <textarea name="essay1" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">2. Bandingkan codec untuk editing (ProRes, DNxHR) dengan codec untuk distribusi (H.264, H.265, AV1) dari segi kualitas, ukuran file, kompatibilitas, dan penggunaan ideal masing-masing!</p>
+                            <textarea name="essay2" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">3. Jelaskan spesifikasi teknis lengkap yang direkomendasikan untuk upload video ke YouTube (container, codec, resolusi, frame rate, bitrate, audio codec, color space, loudness)! Mengapa setiap parameter tersebut dipilih?</p>
+                            <textarea name="essay3" rows="4" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">4. Apa perbedaan antara CBR (Constant Bitrate) dan VBR (Variable Bitrate)? Mengapa VBR lebih direkomendasikan untuk distribusi video? Jelaskan juga perbedaan VBR 1-pass dengan VBR 2-pass!</p>
+                            <textarea name="essay4" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">5. Berdasarkan studi kasus "Video 4K yang Ditolak YouTube" di atas, analisis kesalahan yang dilakukan siswa tersebut dan rancanglah strategi rendering & mastering yang benar untuk video dokumenter 10 menit yang akan diupload ke YouTube DAN diarsipkan sebagai master!</p>
+                            <textarea name="essay5" rows="4" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi -->
+                <div class="pt-6 border-t border-luxury-gold/20 space-y-4">
+                    <button type="button" onclick="hitungNilai()" class="w-full bg-luxury-gold text-luxury-900 font-bold py-3 rounded-lg hover:bg-yellow-400 transition shadow-lg">
+                        ✉️ KIRIM JAWABAN & LIHAT HASIL
+                    </button>
+                    
+                    <div id="hasilNilai" class="hidden bg-luxury-900 p-6 rounded-xl border border-luxury-gold/30 text-center space-y-4">
+                        <h4 class="text-xl font-bold text-white">📊 Hasil Uji Formatif</h4>
+                        <div class="text-4xl font-serif font-bold text-luxury-gold" id="skorTotal">0</div>
+                        <p class="text-sm text-gray-400" id="detailSkor">Bagian A (PG): 0/100 | Bagian B (Essay): Dinilai Manual oleh Guru</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-4">
+                            <button type="button" onclick="alert('Simulasi: File PDF lengkap sedang diunduh...')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">📥 UNDUH PDF LENGKAP</button>
+                            <button type="button" onclick="alert('Simulasi: File skor sedang diunduh...')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">📊 UNDUH SKOR SAJA</button>
+                            <button type="button" onclick="alert('Simulasi: Email telah dikirim ke ausianggina@gmail.com')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">✉️ KIRIM EMAIL GURU</button>
+                        </div>
+                        <button type="button" onclick="location.reload()" class="text-sm text-gray-400 hover:text-white underline mt-4">🔄 MULAI ULANG</button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-luxury-900 border-t border-luxury-gold/10 py-8 text-center">
+        <p class="text-gray-500 text-sm">© 2026 AUSI ANGGINA, S.Pd — SMKN 1 KOTO BALINGKA. All rights reserved.</p>
+    </footer>
+
+    <!-- Script Simulator & Uji Formatif -->
+    <script>
+        // === SIMULATOR EXPORT SETTINGS ===
+        const platforms = {
+            youtube: {
+                title: '📺 YouTube',
+                desc: 'Platform video terbesar di dunia. Menerima upload hingga 8K, namun sebagian besar penonton menonton di 1080p. Rekomendasi: H.264, 1080p atau 4K, bitrate tinggi, AAC audio, -14 LUFS.',
+                format: '.MP4',
+                codec: 'H.264',
+                res: '1920×1080',
+                fps: '30 fps',
+                bitrate: '10 Mbps',
+                audio: 'AAC 320 kbps',
+                color: 'Rec.709',
+                loud: '-14 LUFS',
+                fileSize: '~750 MB',
+                fileName: 'video_youtube.mp4'
+            },
+            tv: {
+                title: '📡 TV Broadcast',
+                desc: 'Standar broadcast Indonesia mengikuti standar KPI/EBU R128. Wajib menggunakan codec editing (ProRes/DNxHR) untuk kualitas maksimal, loudness -24 LUFS, frame rate 25 fps (PAL).',
+                format: '.MOV',
+                codec: 'ProRes 422 HQ',
+                res: '1920×1080',
+                fps: '25 fps',
+                bitrate: '185 Mbps',
+                audio: 'PCM 24-bit',
+                color: 'Rec.709',
+                loud: '-24 LUFS',
+                fileSize: '~14 GB',
+                fileName: 'video_broadcast.mov'
+            },
+            cinema: {
+                title: '🎬 Bioskop (DCP)',
+                desc: 'Standar bioskop digital menggunakan DCP (Digital Cinema Package) dengan codec JPEG2000. Resolusi 2K/4K DCI, 24 fps, aspect ratio 1.85:1 atau 2.39:1, audio PCM 5.1/7.1 surround.',
+                format: '.DCP',
+                codec: 'JPEG2000',
+                res: '2048×1080 (2K DCI)',
+                fps: '24 fps',
+                bitrate: '250 Mbps',
+                audio: 'PCM 24-bit 5.1',
+                color: 'DCI-P3',
+                loud: '-22 LUFS',
+                fileSize: '~200 GB',
+                fileName: 'film_cinema.dcp'
+            },
+            instagram: {
+                title: '📱 Instagram',
+                desc: 'Instagram Feed menggunakan 1:1 atau 4:5, Reels/Stories menggunakan 9:16 vertical. Render di 1080p (JANGAN 4K) karena Instagram akan kompresi ulang. Bitrate 5-8 Mbps cukup.',
+                format: '.MP4',
+                codec: 'H.264',
+                res: '1080×1920 (9:16)',
+                fps: '30 fps',
+                bitrate: '6 Mbps',
+                audio: 'AAC 256 kbps',
+                color: 'Rec.709',
+                loud: '-14 LUFS',
+                fileSize: '~350 MB',
+                fileName: 'reel_instagram.mp4'
+            },
+            tiktok: {
+                title: '🎵 TikTok',
+                desc: 'TikTok menggunakan 9:16 vertical 1080×1920. Render di 1080p JANGAN 4K — TikTok akan kompresi dan hasilnya lebih buruk. Durasi maksimal 10 menit. Frame rate 30 atau 60 fps.',
+                format: '.MP4',
+                codec: 'H.264',
+                res: '1080×1920 (9:16)',
+                fps: '30 fps',
+                bitrate: '10 Mbps',
+                audio: 'AAC 256 kbps',
+                color: 'Rec.709',
+                loud: '-14 LUFS',
+                fileSize: '~600 MB',
+                fileName: 'video_tiktok.mp4'
+            },
+            archive: {
+                title: '💾 Master Archive',
+                desc: 'File master untuk arsip jangka panjang. Gunakan codec lossless (ProRes 422 HQ / DNxHR HQ) dengan audio PCM uncompressed. Ukuran besar tapi kualitas maksimal untuk re-edit di masa depan.',
+                format: '.MOV',
+                codec: 'ProRes 422 HQ',
+                res: '3840×2160 (4K)',
+                fps: '24 fps',
+                bitrate: '700 Mbps',
+                audio: 'PCM 24-bit',
+                color: 'Rec.709',
+                loud: 'N/A (master)',
+                fileSize: '~50 GB',
+                fileName: 'master_archive.mov'
+            }
+        };
+
+        let currentPlatform = 'youtube';
+
+        function setPlatform(type) {
+            currentPlatform = type;
+            const plat = platforms[type];
+            
+            document.getElementById('platTitle').innerText = plat.title;
+            document.getElementById('platDesc').innerText = plat.desc;
+            document.getElementById('specFormat').innerText = plat.format;
+            document.getElementById('specCodec').innerText = plat.codec;
+            document.getElementById('specRes').innerText = plat.res;
+            document.getElementById('specFps').innerText = plat.fps;
+            document.getElementById('specBitrate').innerText = plat.bitrate;
+            document.getElementById('specAudio').innerText = plat.audio;
+            document.getElementById('specColor').innerText = plat.color;
+            document.getElementById('specLoud').innerText = plat.loud;
+            document.getElementById('fileBadge').innerText = plat.format.replace('.', '');
+            document.getElementById('fileName').innerText = plat.fileName;
+            document.getElementById('fileSize').innerText = plat.fileSize;
+
+            // Update active button
+            document.querySelectorAll('.platform-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Reset progress
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressText').innerText = 'Siap untuk render';
+            document.getElementById('fileIcon').classList.remove('rendering');
+        }
+
+        function simulateRender() {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const fileIcon = document.getElementById('fileIcon');
+            const plat = platforms[currentPlatform];
+            
+            fileIcon.classList.add('rendering');
+            progressFill.style.width = '0%';
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    progressText.innerText = '✅ Render selesai!';
+                    fileIcon.classList.remove('rendering');
+                    fileIcon.innerText = '✅';
+                    setTimeout(() => {
+                        fileIcon.innerText = '🎬';
+                    }, 2000);
+                } else {
+                    progressText.innerText = `Rendering... ${Math.floor(progress)}%`;
+                }
+                progressFill.style.width = progress + '%';
+            }, 200);
+        }
+
+        // === UJI FORMATIF ===
+        function hitungNilai() {
+            const nama = document.getElementById('nama').value;
+            const nis = document.getElementById('nis').value;
+            const tanggal = document.getElementById('tanggal').value;
+            const kelas = document.getElementById('kelas').value;
+
+            if (!nama || !nis || !tanggal || !kelas) {
+                alert("⚠️ Mohon lengkapi semua Data Siswa terlebih dahulu!");
+                return;
+            }
+
+            const kunciJawaban = {
+                q1: 'b',  // Rendering
+                q2: 'c',  // H.264
+                q3: 'b',  // Container
+                q4: 'b',  // -14 LUFS
+                q5: 'b',  // 1920×1080
+                q6: 'a',  // Rec.709
+                q7: 'c',  // Apple ProRes
+                q8: 'c',  // 9:16 (vertical)
+                q9: 'a',  // 24 fps
+                q10: 'b'  // 3 salinan, 2 media, 1 lokasi berbeda
+            };
+
+            let skorPG = 0;
+            let terjawab = 0;
+
+            for (let i = 1; i <= 10; i++) {
+                const jawaban = document.querySelector(`input[name="q${i}"]:checked`);
+                if (jawaban) {
+                    terjawab++;
+                    if (jawaban.value === kunciJawaban[`q${i}`]) {
+                        skorPG += 10;
+                    }
+                }
+            }
+
+            if (terjawab < 10) {
+                alert(`⚠️ Mohon lengkapi semua 10 soal pilihan ganda terlebih dahulu! (Baru terjawab ${terjawab})`);
+                return;
+            }
+
+            let essayKosong = false;
+            for (let i = 1; i <= 5; i++) {
+                if (document.querySelector(`textarea[name="essay${i}"]`).value.trim() === "") {
+                    essayKosong = true;
+                    break;
+                }
+            }
+
+            if (essayKosong) {
+                alert("⚠️ Mohon isi semua 5 soal essay terlebih dahulu!");
+                return;
+            }
+
+            document.getElementById('skorTotal').innerText = skorPG;
+            document.getElementById('detailSkor').innerText = `Bagian A (PG): ${skorPG}/100 | Bagian B (Essay): Menunggu Penilaian Guru`;
+            document.getElementById('hasilNilai').classList.remove('hidden');
+            
+            document.getElementById('hasilNilai').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            alert(`✅ Jawaban berhasil diproses!\n\nNama: ${nama}\nNIS: ${nis}\nKelas: ${kelas}\nSkor Sementara (Pilihan Ganda): ${skorPG}/100\n\nCatatan: Bagian Essay akan dinilai secara manual oleh guru.`);
+        }
+    </script>
+
+</body>
+</html>

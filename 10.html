@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pertemuan 10: Penyuntingan Lanjutan (Fine Cut & Continuity)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        luxury: {
+                            900: '#0B0F19',
+                            800: '#151B2B',
+                            700: '#1E293B',
+                            gold: '#D4AF37',
+                            goldLight: '#F3E5AB',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(21, 27, 43, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #D4AF37 0%, #F3E5AB 50%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hover-lift {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px -5px rgba(212, 175, 55, 0.15);
+        }
+        .quiz-container::-webkit-scrollbar { width: 8px; }
+        .quiz-container::-webkit-scrollbar-track { background: #151B2B; }
+        .quiz-container::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 4px; }
+
+        /* Cut Type Simulator */
+        .cut-timeline {
+            background: linear-gradient(180deg, #0B0F19 0%, #151B2B 100%);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .cut-track {
+            min-height: 50px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px dashed rgba(212, 175, 55, 0.2);
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            gap: 2px;
+            align-items: center;
+            position: relative;
+        }
+        .cut-clip {
+            padding: 10px 14px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.4s ease;
+            white-space: nowrap;
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+        }
+        .cut-clip.video { background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%); color: white; }
+        .cut-clip.audio { background: linear-gradient(135deg, #10B981 0%, #047857 100%); color: white; }
+        .cut-clip.overlap { 
+            background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); 
+            color: white; 
+            position: absolute;
+            z-index: 5;
+        }
+        .cut-marker {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #D4AF37;
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.8);
+            z-index: 20;
+        }
+        .cut-marker::after {
+            content: '▼';
+            position: absolute;
+            top: -14px;
+            left: -5px;
+            color: #D4AF37;
+            font-size: 10px;
+        }
+        .cut-btn {
+            transition: all 0.2s ease;
+        }
+        .cut-btn.active {
+            background: #D4AF37 !important;
+            color: #0B0F19 !important;
+            border-color: #D4AF37 !important;
+        }
+
+        /* Continuity Error Visual */
+        .error-demo {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .error-frame {
+            aspect-ratio: 16/9;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+            position: relative;
+            border: 2px solid transparent;
+        }
+        .error-frame.bad {
+            border-color: #EF4444;
+            background: linear-gradient(135deg, #7F1D1D 0%, #991B1B 100%);
+        }
+        .error-frame.good {
+            border-color: #10B981;
+            background: linear-gradient(135deg, #065F46 0%, #047857 100%);
+        }
+        .error-frame .badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: rgba(0,0,0,0.6);
+        }
+    </style>
+</head>
+<body class="bg-luxury-900 text-gray-200 font-sans antialiased selection:bg-luxury-gold selection:text-luxury-900">
+
+    <!-- Navigasi -->
+    <nav class="fixed w-full z-50 glass border-b border-luxury-gold/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <a href="index.html" class="font-serif text-lg font-semibold text-white tracking-wide hover:text-luxury-gold transition">
+                        ← Kembali ke Beranda
+                    </a>
+                </div>
+                <div class="hidden md:flex space-x-6 text-sm font-medium">
+                    <a href="#materi" class="hover:text-luxury-gold transition">Materi</a>
+                    <a href="#simulator" class="hover:text-luxury-gold transition">Simulator</a>
+                    <a href="#uji-formatif" class="px-4 py-2 bg-luxury-gold text-luxury-900 font-bold rounded-full hover:bg-yellow-400 transition">Uji Formatif</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Materi -->
+    <header class="pt-32 pb-16 bg-gradient-to-b from-luxury-800 to-luxury-900 border-b border-luxury-gold/10">
+        <div class="max-w-5xl mx-auto px-4 text-center">
+            <span class="inline-block px-4 py-1 rounded-full border border-luxury-gold/30 bg-luxury-gold/10 text-luxury-gold text-xs font-bold tracking-widest uppercase mb-4">
+                Pertemuan 10 dari 16
+            </span>
+            <h1 class="font-serif text-4xl md:text-5xl font-bold text-white mb-6">
+                Penyuntingan Lanjutan: <br><span class="gold-gradient-text">Fine Cut & Continuity</span>
+            </h1>
+            <p class="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
+                Mengubah kerangka cerita (<em>rough cut</em>) menjadi karya yang halus dan profesional — melalui penyempurnaan potongan (<em>fine cut</em>), penguasaan teknik cut sinematik (J-cut, L-cut, match cut), dan menjaga kesinambungan visual (<em>continuity</em>) yang tak terlihat oleh penonton.
+            </p>
+            <div class="mt-8 flex justify-center gap-4">
+                <a href="9.html" class="text-sm text-gray-400 hover:text-luxury-gold transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    Bab Sebelumnya
+                </a>
+                <span class="text-gray-600">|</span>
+                <a href="11.html" class="text-sm text-luxury-gold hover:text-white transition flex items-center gap-2 font-semibold">
+                    Bab Selanjutnya: Transisi, Efek & Titling
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Konten Utama -->
+    <main id="materi" class="max-w-5xl mx-auto px-4 py-16 space-y-16">
+
+        <!-- Pendahuluan -->
+        <section class="glass rounded-2xl p-8 md:p-10 border-l-4 border-luxury-gold">
+            <h2 class="font-serif text-2xl font-bold text-white mb-4">Pendahuluan</h2>
+            <p class="text-gray-300 leading-relaxed mb-4">
+                Jika <em>rough cut</em> adalah kerangka tulang dari sebuah film, maka <strong class="text-luxury-gold">fine cut</strong> adalah daging, kulit, dan jiwa yang membuatnya hidup. Di tahap inilah editor benar-benar "menulis ulang" cerita melalui potongan — memilih frame terbaik, mengatur ritme, dan menciptakan emosi yang mengalir mulus dari satu adegan ke adegan berikutnya.
+            </p>
+            <p class="text-gray-300 leading-relaxed">
+                Namun, potongan yang indah saja tidak cukup. Sebuah film akan terasa "rusak" jika penonton menyadari <em>continuity error</em> — misalnya gelas yang berpindah tangan secara ajaib, atau arah pandang karakter yang tiba-tiba berubah. Pertemuan ini akan membawa Anda menguasai dua pilar editing lanjutan: <strong class="text-luxury-gold">Fine Cut</strong> (seni memotong dengan presisi) dan <strong class="text-luxury-gold">Continuity Editing</strong> (seni menjaga ilusi realitas yang tak terputus).
+            </p>
+        </section>
+
+        <!-- Konsep Kunci -->
+        <section>
+            <h2 class="font-serif text-2xl font-bold text-luxury-gold mb-6 flex items-center gap-3">
+                <span class="text-3xl">🔑</span> Konsep Kunci
+            </h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">✂️</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Fine Cut</h3>
+                    <p class="text-sm text-gray-400">Penyempurnaan rough cut dengan memotong setiap frame secara presisi untuk menciptakan pacing dan ritme yang nyaman ditonton.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🎵</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Pacing & Rhythm</h3>
+                    <p class="text-sm text-gray-400">Kecepatan dan irama potongan yang menentukan energi scene — cepat untuk aksi, lambat untuk emosi.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🔗</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Continuity</h3>
+                    <p class="text-sm text-gray-400">Kesinambungan visual antar-shot (posisi, arah, pencahayaan, properti) yang menjaga ilusi realitas.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🎬</div>
+                    <h3 class="font-bold text-white text-lg mb-2">J-Cut & L-Cut</h3>
+                    <p class="text-sm text-gray-400">Split edits di mana audio dan video tidak cut di titik yang sama — menciptakan transisi yang halus dan profesional.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🎯</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Match Cut</h3>
+                    <p class="text-sm text-gray-400">Potongan cerdas berdasarkan kesamaan visual, bentuk, atau gerakan antara dua shot berbeda.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">👁️</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Eye-Line Match</h3>
+                    <p class="text-sm text-gray-400">Teknik menyambung shot karakter yang melihat dengan shot objek yang dilihat, menjaga logika visual.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simulator Jenis-Jenis Cut -->
+        <section id="simulator" class="bg-gradient-to-br from-luxury-800 to-luxury-900 rounded-2xl p-8 border border-luxury-gold/20">
+            <h2 class="font-serif text-2xl font-bold text-white mb-2 flex items-center gap-3">
+                <span class="text-3xl">🎛️</span> Simulator Jenis-Jenis Cut
+            </h2>
+            <p class="text-gray-400 text-sm mb-6">Pilih jenis potongan untuk melihat bagaimana audio dan video berinteraksi di timeline. Perhatikan perbedaan timing antara setiap teknik.</p>
+
+            <div class="space-y-6">
+                <!-- Kontrol -->
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    <button onclick="setCutType('hard')" class="cut-btn active bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">⚡ Hard Cut</button>
+                    <button onclick="setCutType('jcut')" class="cut-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🎤 J-Cut</button>
+                    <button onclick="setCutType('lcut')" class="cut-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🎬 L-Cut</button>
+                    <button onclick="setCutType('match')" class="cut-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🎯 Match Cut</button>
+                    <button onclick="setCutType('cutaway')" class="cut-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">📷 Cutaway</button>
+                </div>
+
+                <!-- Timeline Visual -->
+                <div class="cut-timeline">
+                    <div class="text-xs text-luxury-gold mb-2 font-bold">📹 VIDEO TRACK</div>
+                    <div class="cut-track" id="videoTrack"></div>
+                    
+                    <div class="text-xs text-luxury-gold mb-2 font-bold mt-4">🎤 AUDIO TRACK</div>
+                    <div class="cut-track" id="audioTrack"></div>
+
+                    <!-- Cut Marker -->
+                    <div class="cut-marker" id="cutMarker" style="left: 50%;"></div>
+                </div>
+
+                <!-- Info -->
+                <div class="bg-luxury-900 p-4 rounded-lg border border-luxury-gold/20">
+                    <p class="text-sm font-bold text-luxury-gold mb-1" id="cutTitle">⚡ Hard Cut</p>
+                    <p class="text-xs text-gray-400 mb-2" id="cutDesc">Potongan langsung dari satu shot ke shot berikutnya. Audio dan video cut di titik yang sama. Jenis cut paling dasar dan paling sering digunakan — menciptakan transisi tegas dan energetik.</p>
+                    <div class="text-xs text-gray-500 border-t border-luxury-gold/10 pt-2 mt-2">
+                        <p class="font-bold text-gray-300 mb-1">💡 Penggunaan Ideal:</p>
+                        <p id="cutUsage">Dialog cepat, adegan aksi, perpindahan scene yang tegas, cutting on action.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Visualisasi Continuity Error -->
+        <section class="bg-luxury-800 rounded-2xl p-8 border border-luxury-gold/10">
+            <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">🔍 Contoh Continuity Error yang Harus Dihindari</h3>
+            <p class="text-sm text-gray-400 mb-4">Perhatikan perbedaan antara shot yang continuity-nya terjaga (hijau) vs yang rusak (merah):</p>
+            
+            <div class="error-demo">
+                <div class="error-frame good">
+                    <span>Shot 1: Gelas di tangan KIRI</span>
+                    <span class="badge">✅ OK</span>
+                </div>
+                <div class="error-frame bad">
+                    <span>Shot 2: Gelas pindah ke tangan KANAN</span>
+                    <span class="badge">❌ ERROR</span>
+                </div>
+                <div class="error-frame good">
+                    <span>Shot 3: Gelas tetap di tangan KIRI</span>
+                    <span class="badge">✅ OK</span>
+                </div>
+            </div>
+
+            <div class="error-demo mt-4">
+                <div class="error-frame good">
+                    <span>Shot A: Karakter menghadap KANAN</span>
+                    <span class="badge">✅ OK</span>
+                </div>
+                <div class="error-frame good">
+                    <span>Shot B: Reverse shot, karakter menghadap KIRI</span>
+                    <span class="badge">✅ OK</span>
+                </div>
+                <div class="error-frame bad">
+                    <span>Shot C: Tiba-tiba menghadap KANAN lagi</span>
+                    <span class="badge">❌ ERROR</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Studi Kasus -->
+        <section class="bg-red-900/10 border border-red-500/20 rounded-2xl p-8">
+            <h3 class="font-serif text-xl font-bold text-red-400 mb-4 flex items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                📖 Studi Kasus: Jump Cut yang Mengacaukan Penonton
+            </h3>
+            <p class="text-gray-300 mb-4">
+                Seorang siswa DKV mengedit video wawancara. Karena tidak memahami <em>continuity</em>, ia memotong bagian "umm" dan "aaah" dari dialog narasumber secara brutal — tanpa menyisipkan <em>cutaway</em> atau <em>B-roll</em>. Hasilnya, kepala narasumber "meloncat-loncat" secara tidak wajar di setiap potongan (<em>jump cut</em>). Penonton merasa pusing dan tidak nyaman. Video yang seharusnya berdurasi 5 menit, terasa seperti 15 menit karena ritmenya rusak.
+            </p>
+            <div class="bg-luxury-900/50 p-4 rounded-lg border-l-2 border-red-500">
+                <p class="text-sm text-gray-300"><strong class="text-red-400">Pembelajaran:</strong> (1) Jump cut pada wajah manusia sangat mengganggu — gunakan <em>J-cut/L-cut</em> atau sisipkan <em>B-roll</em> untuk menyembunyikan potongan. (2) Potongan harus dilakukan pada momen yang tepat: saat gerakan (<em>cutting on action</em>), saat pergantian dialog, atau saat ada perubahan informasi visual. (3) <em>Continuity</em> bukan sekadar aturan teknis — ia adalah penjaga ilusi realitas yang membuat penonton tenggelam dalam cerita.</p>
+            </div>
+        </section>
+
+        <!-- Refleksi -->
+        <section class="bg-luxury-800 rounded-2xl p-8 border border-luxury-gold/10">
+            <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">💭 Refleksi untuk Siswa DKV</h3>
+            <p class="text-gray-300 leading-relaxed">
+                Di SMKN 1 Koto Balingka, Anda mungkin mengedit menggunakan software sederhana seperti CapCut atau Premiere Pro versi dasar. Namun, prinsip fine cut dan continuity tetap sama — bahkan di software gratis sekalipun. Mulailah melatih "mata editor" Anda dengan menonton film favorit dan menganalisis: kapan mereka melakukan cut? Apakah ada J-cut atau L-cut? Apakah continuity terjaga? Editor hebat bukan yang paling cepat, tapi yang paling <em>peka</em> terhadap detail.
+            </p>
+        </section>
+
+        <!-- Detail Materi -->
+        <section class="space-y-8">
+            <h2 class="font-serif text-2xl font-bold text-white border-b border-luxury-gold/20 pb-2">Uraian Materi Lengkap</h2>
+            
+            <div class="space-y-8">
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">1. Dari Rough Cut ke Fine Cut</h3>
+                    <p class="text-gray-300 mb-3">Fine cut adalah proses penyempurnaan rough cut dengan memotong setiap frame secara presisi:</p>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Trimming:</strong> Memotong kelebihan 1-5 frame di awal/akhir klip untuk mendapatkan timing yang tepat. Bahkan 3 frame bisa membuat perbedaan besar dalam ritme.</li>
+                        <li><strong>Removing Dead Space:</strong> Menghilangkan jeda panjang, napas berlebihan, atau momen "mati" dalam dialog yang tidak menambah nilai cerita.</li>
+                        <li><strong>Tightening:</strong> Memperketat potongan agar pacing lebih dinamis — terutama untuk adegan aksi, komedi, atau momen emosional yang intens.</li>
+                        <li><strong>Reordering:</strong> Mengubah urutan shot jika dirasa alur cerita lebih kuat dengan susunan berbeda.</li>
+                        <li><strong>Removing Redundancy:</strong> Menghapus shot yang informasinya sudah disampaikan oleh shot lain — prinsip <em>"less is more"</em>.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">2. Pacing & Rhythm (Ketukan & Irama)</h3>
+                    <p class="text-gray-300 mb-3">Pacing adalah kecepatan potongan; rhythm adalah pola dan iramanya. Keduanya menentukan energi scene:</p>
+                    <div class="grid md:grid-cols-2 gap-4 mt-3">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">⚡ Fast Pacing</p>
+                            <ul class="text-xs text-gray-400 space-y-1 ml-4 list-disc list-inside">
+                                <li>Potongan pendek (1-3 detik per shot)</li>
+                                <li>Banyak cut dalam waktu singkat</li>
+                                <li>Cocok untuk: aksi, chase, komedi, montase, trailer</li>
+                                <li>Menciptakan: energi, ketegangan, kegembiraan</li>
+                            </ul>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/10">
+                            <p class="font-bold text-white text-sm mb-2">🐢 Slow Pacing</p>
+                            <ul class="text-xs text-gray-400 space-y-1 ml-4 list-disc list-inside">
+                                <li>Potongan panjang (5-15 detik per shot)</li>
+                                <li>Sedikit cut, membiarkan scene "bernapas"</li>
+                                <li>Cocok untuk: drama, kontemplasi, landscape, emosi</li>
+                                <li>Menciptakan: kedalaman, kesedihan, ketenangan</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">3. Jenis-Jenis Cut Sinematik</h3>
+                    <div class="space-y-4">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">⚡ Hard Cut</h4>
+                            <p class="text-sm text-gray-300 mb-2">Potongan langsung dari shot A ke shot B. Audio dan video cut di titik yang sama. Jenis cut paling dasar dan paling sering digunakan.</p>
+                            <p class="text-xs text-gray-400"><strong>Contoh:</strong> Shot karakter A berbicara → cut → shot karakter B merespons.</p>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎤 J-Cut (Split Edit)</h4>
+                            <p class="text-sm text-gray-300 mb-2">Audio dari shot berikutnya <strong>masuk lebih dulu</strong> sebelum video-nya muncul. Dinamakan "J" karena bentuknya menyerupai huruf J di timeline.</p>
+                            <p class="text-xs text-gray-400"><strong>Contoh:</strong> Kita mendengar suara ombak sebelum melihat shot pantai. Menciptakan antisipasi dan transisi yang halus.</p>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎬 L-Cut (Split Edit)</h4>
+                            <p class="text-sm text-gray-300 mb-2">Audio dari shot sebelumnya <strong>masih berlanjut</strong> setelah video sudah cut ke shot berikutnya. Dinamakan "L" karena bentuknya menyerupai huruf L di timeline.</p>
+                            <p class="text-xs text-gray-400"><strong>Contoh:</strong> Dialog karakter A masih terdengar saat kita sudah melihat reaksi karakter B. Sangat umum dalam wawancara dan dialog film.</p>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎯 Match Cut</h4>
+                            <p class="text-sm text-gray-300 mb-2">Potongan cerdas yang menyambung dua shot berdasarkan <strong>kesamaan visual, bentuk, gerakan, atau konsep</strong>. Menciptakan hubungan metaforis yang kuat.</p>
+                            <p class="text-xs text-gray-400"><strong>Contoh klasik:</strong> Dalam film <em>2001: A Space Odyssey</em>, tulang yang dilempar oleh manusia purba → match cut → pesawat luar angkasa. Keduanya memiliki bentuk dan gerakan yang serupa.</p>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📷 Cutaway</h4>
+                            <p class="text-sm text-gray-300 mb-2">Potongan sementara ke shot berbeda yang <strong>berkaitan dengan scene utama</strong>, lalu kembali ke scene asli. Berguna untuk menyembunyikan jump cut atau menambah informasi.</p>
+                            <p class="text-xs text-gray-400"><strong>Contoh:</strong> Saat wawancara, cutaway ke B-roll (tangan yang bergerak, objek yang dibahas, suasana sekitar) untuk menyembunyikan potongan dialog.</p>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🔄 Cross-Cutting / Parallel Editing</h4>
+                            <p class="text-sm text-gray-300 mb-2">Menyambung dua atau lebih scene yang terjadi <strong>di waktu bersamaan namun lokasi berbeda</strong>. Menciptakan ketegangan dan hubungan naratif.</p>
+                            <p class="text-xs text-gray-400"><strong>Contoh:</strong> Scene karakter A berlari menuju stasiun → cut → karakter B menunggu di peron → cut kembali ke A yang semakin dekat.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">4. Teknik Cutting yang Profesional</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Cutting on Action:</strong> Memotong saat karakter sedang bergerak (membuka pintu, menoleh, berdiri). Gerakan menutupi potongan sehingga tidak terlihat.</li>
+                        <li><strong>Cutting on Dialogue:</strong> Memotong saat pergantian pembicara — cut dari yang berbicara ke yang mendengar (reaksi).</li>
+                        <li><strong>Cutting on Sound:</strong> Memotong saat ada suara penting (pintu terbanting, telepon berdering) untuk menciptakan dampak dramatis.</li>
+                        <li><strong>Motivated Cut:</strong> Setiap potongan harus punya alasan — mengikuti pandangan karakter, menjawab pertanyaan visual, atau mengungkap informasi baru.</li>
+                        <li><strong>Invisible Cut:</strong> Potongan yang "tidak terlihat" oleh penonton — inilah tujuan utama continuity editing.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">5. Continuity Editing: Menjaga Ilusi Realitas</h3>
+                    <p class="text-gray-300 mb-3">Continuity adalah kesinambungan visual dan naratif antar-shot. Pelanggaran continuity akan merusak ilusi dan membuat penonton "keluar" dari cerita:</p>
+                    <div class="space-y-4 mt-3">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📐 Continuity of Position</h4>
+                            <p class="text-sm text-gray-300">Posisi karakter/objek harus konsisten antar-shot. Jika karakter berdiri di kiri frame pada shot 1, ia harus tetap di kiri pada shot berikutnya (kecuali ada perpindahan yang terlihat).</p>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">➡️ Continuity of Direction (180° Rule)</h4>
+                            <p class="text-sm text-gray-300">Arah pandang karakter harus konsisten. Jika karakter A menghadap kanan, karakter B harus menghadap kiri. Melanggar aturan 180° akan membuat mereka seolah menatap ke arah yang sama.</p>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">👁️ Eye-Line Match</h4>
+                            <p class="text-sm text-gray-300">Jika karakter melihat ke suatu arah, shot berikutnya harus menunjukkan apa yang dilihatnya — pada posisi yang sesuai dengan arah pandang.</p>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎭 Continuity of Action</h4>
+                            <p class="text-sm text-gray-300">Aksi yang dimulai di satu shot harus berlanjut secara logis di shot berikutnya. Gunakan <em>overlapping action</em> — rekam aksi yang sama dari beberapa angle untuk memudahkan matching.</p>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">👔 Continuity of Costume, Props & Makeup</h4>
+                            <p class="text-sm text-gray-300">Pakaian, properti, dan makeup karakter harus konsisten. Gelas yang setengah penuh di shot 1 tidak boleh tiba-tiba penuh di shot 2 (kecuali ada aksi mengisi yang terlihat).</p>
+                        </div>
+
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">💡 Continuity of Lighting</h4>
+                            <p class="text-sm text-gray-300">Pencahayaan harus konsisten antar-shot dalam scene yang sama. Perubahan cahaya matahari (karena waktu berlalu) harus disamarkan atau justru dieksploitasi secara kreatif.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">6. Tools Editing Lanjutan di Software</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Ripple Edit:</strong> Mengubah durasi klip dan menggeser semua klip setelahnya secara otomatis — menjaga timeline tetap rapat.</li>
+                        <li><strong>Roll Edit:</strong> Menggeser titik cut antara dua klip yang berdekatan tanpa mengubah durasi total — memperpanjang satu klip dengan mengorbankan klip sebelahnya.</li>
+                        <li><strong>Slip Edit:</strong> Menggeser isi klip tanpa mengubah posisi atau durasinya di timeline — memilih frame awal/akhir yang berbeda dari klip yang sama.</li>
+                        <li><strong>Slide Edit:</strong> Menggeser posisi klip di timeline sambil menyesuaikan klip di sebelahnya — seperti menggeser kotak di antara kotak lain.</li>
+                        <li><strong>Trim Mode:</strong> Mode presisi untuk微调 (fine-tune) titik in/out klip dengan akurasi per-frame.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">7. Continuity Script & Notes</h3>
+                    <p class="text-gray-300 mb-3">Di produksi profesional, ada peran <strong class="text-luxury-gold">Script Supervisor</strong> yang bertugas mencatat detail continuity selama syuting:</p>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Polaroid/Foto Continuity:</strong> Foto setiap setup untuk referensi editor nanti.</li>
+                        <li><strong>Catatan Detail:</strong> Tangan karakter di mana, gelas terisi berapa, arah pandang, dll.</li>
+                        <li><strong>Circle Take:</strong> Menandai take terbaik yang harus digunakan editor.</li>
+                        <li><strong>Notes untuk Editor:</strong> Masalah teknis yang terjadi saat take tertentu.</li>
+                    </ul>
+                    <p class="text-gray-300 mt-3">Di produksi kecil (seperti tugas sekolah), peran ini bisa dipegang oleh salah satu anggota tim. Foto continuity sederhana dengan smartphone sudah sangat membantu editor nanti.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tips Praktis -->
+        <section class="bg-gradient-to-r from-luxury-gold/10 to-transparent p-6 rounded-xl border-l-4 border-luxury-gold">
+            <h3 class="font-bold text-white mb-3">💡 Tips Praktis Fine Cut & Continuity</h3>
+            <ul class="space-y-2 text-sm text-gray-300">
+                <li>✅ Tonton rough cut Anda minimal 2x sebelum mulai fine cut — pertama untuk kesan umum, kedua untuk mencatat masalah spesifik.</li>
+                <li>✅ Gunakan <em>J-cut dan L-cut</em> secara default untuk dialog — ini membuat percakapan terasa lebih natural dan profesional.</li>
+                <li>✅ Potong pada gerakan (<em>cutting on action</em>) — ini adalah cara termudah untuk menyembunyikan potongan.</li>
+                <li>✅ Untuk wawancara, selalu sisipkan <em>cutaway/B-roll</em> setiap 15-30 detik untuk menghindari jump cut.</li>
+                <li>✅ Saat syuting, rekam setiap aksi dari minimal 2 angle berbeda dengan <em>overlapping action</em> — ini akan menyelamatkan editing Anda.</li>
+                <li>✅ Foto continuity dengan smartphone di setiap setup — lebih baik punya dan tidak butuh, daripada butuh dan tidak punya.</li>
+                <li>✅ Tonton fine cut Anda di layar berbeda (TV, laptop, HP) untuk memastikan kualitasnya konsisten di berbagai perangkat.</li>
+                <li>✅ Jangan takut memotong shot yang Anda sukai tetapi tidak melayani cerita — <em>"kill your darlings"</em>.</li>
+            </ul>
+        </section>
+
+        <!-- Kesimpulan & Daftar Pustaka -->
+        <section class="border-t border-luxury-gold/10 pt-8">
+            <h3 class="font-serif text-xl font-bold text-white mb-4">Kesimpulan</h3>
+            <p class="text-gray-300 mb-6">
+                Fine cut dan continuity editing adalah seni yang membedakan editor amatir dengan editor profesional. Fine cut mengajarkan kita untuk memotong dengan presisi, mengatur pacing, dan memilih jenis cut yang tepat (hard cut, J-cut, L-cut, match cut, cutaway) untuk melayani cerita. Continuity editing mengajarkan kita untuk menjaga ilusi realitas yang tak terputus — sehingga penonton dapat tenggelam sepenuhnya dalam dunia yang kita ciptakan. Ingatlah: <strong class="text-luxury-gold">"Editing yang terbaik adalah yang tidak terlihat"</strong> — ketika penonton tidak menyadari adanya potongan, di situlah editor telah berhasil.
+            </p>
+            <h3 class="font-serif text-lg font-bold text-luxury-gold mb-3">📚 Daftar Pustaka</h3>
+            <ul class="text-sm text-gray-400 space-y-1 list-disc list-inside">
+                <li>Dancyger, K. (2013). <em>The Technique of Film and Video Editing: History, Theory, and Practice</em> (5th ed.). Burlington: Focal Press.</li>
+                <li>Eisenstein, S. (1949). <em>Film Form: Essays in Film Theory</em>. New York: Harcourt.</li>
+                <li>Murch, W. (2001). <em>In the Blink of an Eye: A Perspective on Film Editing</em> (2nd ed.). Los Angeles: Silman-James Press.</li>
+                <li>Roberts, R., & Saez, A. (2016). <em>Edit Like You Mean It</em>. Studio City: Michael Wiese Productions.</li>
+                <li>Supriadi. (2024). <em>Produksi Multimedia untuk SMK DKV</em>. Bukittinggi: FTIK UIN Bukittinggi.</li>
+            </ul>
+        </section>
+
+    </main>
+
+    <!-- UJI FORMATIF -->
+    <section id="uji-formatif" class="bg-luxury-800 py-16 border-t border-luxury-gold/20">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="text-center mb-10">
+                <h2 class="font-serif text-3xl font-bold text-white mb-2">📋 Uji Formatif Pertemuan 10</h2>
+                <p class="text-gray-400">Materi: Fine Cut, Jenis-Jenis Cut, Pacing, dan Continuity Editing</p>
+                <p class="text-sm text-red-400 mt-2 font-semibold">⚠️ Mohon lengkapi semua data dan jawaban terlebih dahulu!</p>
+            </div>
+
+            <form id="quizForm" class="glass rounded-2xl p-6 md:p-10 space-y-8 quiz-container max-h-[800px] overflow-y-auto">
+                
+                <!-- Data Siswa -->
+                <div class="space-y-4 border-b border-luxury-gold/20 pb-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">📋 Data Siswa</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Nama Lengkap</label>
+                            <input type="text" id="nama" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* NIS</label>
+                            <input type="text" id="nis" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Tanggal</label>
+                            <input type="date" id="tanggal" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Kelas</label>
+                            <select id="kelas" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                                <option value="">Pilih Kelas</option>
+                                <option value="XII DKV 1">XII DKV 1</option>
+                                <option value="XII DKV 2">XII DKV 2</option>
+                                <option value="XII DKV 3">XII DKV 3</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian A: Pilihan Ganda -->
+                <div class="space-y-6 border-b border-luxury-gold/20 pb-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">📋 Bagian A – Pilihan Ganda (Skor 10/soal)</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">1. Proses penyempurnaan rough cut dengan memotong setiap frame secara presisi untuk menciptakan pacing yang nyaman disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="a" class="accent-luxury-gold"> a. Rough Cut</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="b" class="accent-luxury-gold"> b. Fine Cut</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="c" class="accent-luxury-gold"> c. Final Cut</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="d" class="accent-luxury-gold"> d. Master Cut</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">2. Teknik cut di mana audio dari shot berikutnya masuk lebih dulu sebelum video-nya muncul disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="a" class="accent-luxury-gold"> a. L-Cut</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="b" class="accent-luxury-gold"> b. J-Cut</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="c" class="accent-luxury-gold"> c. Match Cut</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="d" class="accent-luxury-gold"> d. Hard Cut</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">3. Potongan cerdas yang menyambung dua shot berdasarkan kesamaan visual, bentuk, atau gerakan disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="a" class="accent-luxury-gold"> a. Cutaway</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="b" class="accent-luxury-gold"> b. Jump Cut</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="c" class="accent-luxury-gold"> c. Match Cut</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="d" class="accent-luxury-gold"> d. Cross-Cut</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">4. Potongan sementara ke shot berbeda yang berkaitan dengan scene utama, lalu kembali ke scene asli, disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="a" class="accent-luxury-gold"> a. Cutaway</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="b" class="accent-luxury-gold"> b. Match Cut</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="c" class="accent-luxury-gold"> c. J-Cut</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="d" class="accent-luxury-gold"> d. L-Cut</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">5. Teknik memotong saat karakter sedang bergerak (membuka pintu, menoleh) untuk menyembunyikan potongan disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="a" class="accent-luxury-gold"> a. Cutting on Dialogue</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="b" class="accent-luxury-gold"> b. Cutting on Action</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="c" class="accent-luxury-gold"> c. Cutting on Sound</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="d" class="accent-luxury-gold"> d. Jump Cut</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">6. Kesinambungan visual antar-shot (posisi, arah, pencahayaan, properti) yang menjaga ilusi realitas disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="a" class="accent-luxury-gold"> a. Pacing</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="b" class="accent-luxury-gold"> b. Rhythm</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="c" class="accent-luxury-gold"> c. Continuity</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="d" class="accent-luxury-gold"> d. Montage</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">7. Teknik menyambung shot karakter yang melihat ke suatu arah dengan shot objek yang dilihatnya disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="a" class="accent-luxury-gold"> a. Match Cut</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="b" class="accent-luxury-gold"> b. Eye-Line Match</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="c" class="accent-luxury-gold"> c. Cutaway</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="d" class="accent-luxury-gold"> d. Cross-Cut</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">8. Fast pacing (potongan pendek 1-3 detik per shot) paling cocok digunakan untuk genre...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="a" class="accent-luxury-gold"> a. Drama kontemplatif</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="b" class="accent-luxury-gold"> b. Aksi, komedi, montase, trailer</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="c" class="accent-luxury-gold"> c. Dokumenter lambat</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="d" class="accent-luxury-gold"> d. Video meditasi</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">9. Edit tool yang mengubah durasi klip dan menggeser semua klip setelahnya secara otomatis disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="a" class="accent-luxury-gold"> a. Roll Edit</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="b" class="accent-luxury-gold"> b. Slip Edit</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="c" class="accent-luxury-gold"> c. Ripple Edit</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="d" class="accent-luxury-gold"> d. Slide Edit</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">10. Orang yang bertugas mencatat detail continuity selama syuting di produksi profesional disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="a" class="accent-luxury-gold"> a. Director of Photography</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="b" class="accent-luxury-gold"> b. Script Supervisor</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="c" class="accent-luxury-gold"> c. Gaffer</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="d" class="accent-luxury-gold"> d. Boom Operator</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian B: Essay -->
+                <div class="space-y-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">✍️ Bagian B – Essay (Skor 20/soal)</h3>
+                    <p class="text-sm text-gray-400">Jawablah pertanyaan berikut dengan jelas dan terstruktur.</p>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">1. Jelaskan perbedaan antara Rough Cut dan Fine Cut! Mengapa proses fine cut sangat penting dalam mengubah kerangka cerita menjadi karya yang profesional?</p>
+                            <textarea name="essay1" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">2. Deskripsikan 5 jenis cut sinematik (Hard Cut, J-Cut, L-Cut, Match Cut, Cutaway) beserta karakteristik dan contoh penggunaan masing-masing!</p>
+                            <textarea name="essay2" rows="4" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">3. Apa yang dimaksud dengan "Cutting on Action"? Mengapa teknik ini sangat efektif untuk menyembunyikan potongan? Berikan contoh konkret penerapannya!</p>
+                            <textarea name="essay3" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">4. Jelaskan 6 jenis continuity yang harus dijaga dalam editing (Position, Direction, Eye-Line, Action, Costume/Props, Lighting)! Berikan contoh pelanggaran untuk masing-masing jenis!</p>
+                            <textarea name="essay4" rows="4" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">5. Berdasarkan studi kasus "Jump Cut yang Mengacaukan Penonton" di atas, rancanglah solusi editing yang seharusnya dilakukan siswa tersebut untuk memperbaiki video wawancara tanpa harus merekam ulang!</p>
+                            <textarea name="essay5" rows="4" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi -->
+                <div class="pt-6 border-t border-luxury-gold/20 space-y-4">
+                    <button type="button" onclick="hitungNilai()" class="w-full bg-luxury-gold text-luxury-900 font-bold py-3 rounded-lg hover:bg-yellow-400 transition shadow-lg">
+                        ✉️ KIRIM JAWABAN & LIHAT HASIL
+                    </button>
+                    
+                    <div id="hasilNilai" class="hidden bg-luxury-900 p-6 rounded-xl border border-luxury-gold/30 text-center space-y-4">
+                        <h4 class="text-xl font-bold text-white">📊 Hasil Uji Formatif</h4>
+                        <div class="text-4xl font-serif font-bold text-luxury-gold" id="skorTotal">0</div>
+                        <p class="text-sm text-gray-400" id="detailSkor">Bagian A (PG): 0/100 | Bagian B (Essay): Dinilai Manual oleh Guru</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-4">
+                            <button type="button" onclick="alert('Simulasi: File PDF lengkap sedang diunduh...')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">📥 UNDUH PDF LENGKAP</button>
+                            <button type="button" onclick="alert('Simulasi: File skor sedang diunduh...')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">📊 UNDUH SKOR SAJA</button>
+                            <button type="button" onclick="alert('Simulasi: Email telah dikirim ke ausianggina@gmail.com')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">✉️ KIRIM EMAIL GURU</button>
+                        </div>
+                        <button type="button" onclick="location.reload()" class="text-sm text-gray-400 hover:text-white underline mt-4">🔄 MULAI ULANG</button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-luxury-900 border-t border-luxury-gold/10 py-8 text-center">
+        <p class="text-gray-500 text-sm">© 2026 AUSI ANGGINA, S.Pd — SMKN 1 KOTO BALINGKA. All rights reserved.</p>
+    </footer>
+
+    <!-- Script Simulator & Uji Formatif -->
+    <script>
+        // === SIMULATOR JENIS CUT ===
+        const cutTypes = {
+            hard: {
+                title: '⚡ Hard Cut',
+                desc: 'Potongan langsung dari satu shot ke shot berikutnya. Audio dan video cut di titik yang sama. Jenis cut paling dasar dan paling sering digunakan — menciptakan transisi tegas dan energetik.',
+                usage: 'Dialog cepat, adegan aksi, perpindahan scene yang tegas, cutting on action.',
+                video: [
+                    {text: '🎬 Shot A: Karakter A', class: 'video', width: '48%'},
+                    {text: '🎬 Shot B: Karakter B', class: 'video', width: '48%'}
+                ],
+                audio: [
+                    {text: '🎤 Dialog A', class: 'audio', width: '48%'},
+                    {text: '🎤 Dialog B', class: 'audio', width: '48%'}
+                ],
+                markerPos: '50%'
+            },
+            jcut: {
+                title: '🎤 J-Cut (Audio Leads)',
+                desc: 'Audio dari shot B masuk lebih dulu sebelum video B muncul. Dinamakan "J" karena bentuknya di timeline menyerupai huruf J. Menciptakan antisipasi dan transisi yang halus.',
+                usage: 'Transisi antar scene, memperkenalkan lokasi baru, wawancara dengan B-roll.',
+                video: [
+                    {text: '🎬 Shot A', class: 'video', width: '48%'},
+                    {text: '🎬 Shot B', class: 'video', width: '48%'}
+                ],
+                audio: [
+                    {text: '🎤 Dialog A', class: 'audio', width: '35%'},
+                    {text: '🎤 Dialog B (mulai lebih awal)', class: 'overlap', width: '60%', style: 'left: 35%;'}
+                ],
+                markerPos: '50%'
+            },
+            lcut: {
+                title: '🎬 L-Cut (Video Leads)',
+                desc: 'Audio dari shot A masih berlanjut setelah video sudah cut ke shot B. Dinamakan "L" karena bentuknya di timeline menyerupai huruf L. Sangat umum dalam dialog dan wawancara.',
+                usage: 'Menampilkan reaksi karakter saat karakter lain masih berbicara, wawancara dengan B-roll.',
+                video: [
+                    {text: '🎬 Shot A', class: 'video', width: '48%'},
+                    {text: '🎬 Shot B (reaksi)', class: 'video', width: '48%'}
+                ],
+                audio: [
+                    {text: '🎤 Dialog A (lanjutan)', class: 'overlap', width: '60%', style: 'left: 0;'},
+                    {text: '🎤 Dialog B', class: 'audio', width: '35%', style: 'margin-left: auto;'}
+                ],
+                markerPos: '50%'
+            },
+            match: {
+                title: '🎯 Match Cut',
+                desc: 'Potongan cerdas berdasarkan kesamaan visual, bentuk, gerakan, atau konsep antara dua shot. Menciptakan hubungan metaforis yang kuat dan transisi yang elegan.',
+                usage: 'Transisi kreatif, montase, menghubungkan dua ide/waktu/tempat berbeda secara visual.',
+                video: [
+                    {text: '🎬 Tulang dilempar', class: 'video', width: '48%'},
+                    {text: '🎬 Pesawat luar angkasa', class: 'video', width: '48%'}
+                ],
+                audio: [
+                    {text: '🎤 Sound A', class: 'audio', width: '48%'},
+                    {text: '🎤 Sound B', class: 'audio', width: '48%'}
+                ],
+                markerPos: '50%'
+            },
+            cutaway: {
+                title: '📷 Cutaway',
+                desc: 'Potongan sementara ke shot berbeda yang berkaitan dengan scene utama, lalu kembali ke scene asli. Berguna untuk menyembunyikan jump cut atau menambah informasi visual.',
+                usage: 'Menyembunyikan potongan dalam wawancara, menambah B-roll, memberikan konteks tambahan.',
+                video: [
+                    {text: '🎬 Wawancara', class: 'video', width: '30%'},
+                    {text: '📷 B-ROLL', class: 'video', width: '25%', style: 'background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);'},
+                    {text: '🎬 Wawancara', class: 'video', width: '30%'}
+                ],
+                audio: [
+                    {text: '🎤 Dialog berlanjut terus (L-Cut)', class: 'audio', width: '95%'}
+                ],
+                markerPos: '30%'
+            }
+        };
+
+        function setCutType(type) {
+            const cut = cutTypes[type];
+            
+            // Update info
+            document.getElementById('cutTitle').innerText = cut.title;
+            document.getElementById('cutDesc').innerText = cut.desc;
+            document.getElementById('cutUsage').innerText = cut.usage;
+
+            // Update video track
+            const videoTrack = document.getElementById('videoTrack');
+            videoTrack.innerHTML = '';
+            cut.video.forEach(clip => {
+                const el = document.createElement('div');
+                el.className = `cut-clip ${clip.class}`;
+                el.style.width = clip.width;
+                el.style.flexShrink = '0';
+                if (clip.style) el.style.cssText += clip.style;
+                el.innerText = clip.text;
+                videoTrack.appendChild(el);
+            });
+
+            // Update audio track
+            const audioTrack = document.getElementById('audioTrack');
+            audioTrack.innerHTML = '';
+            cut.audio.forEach(clip => {
+                const el = document.createElement('div');
+                el.className = `cut-clip ${clip.class}`;
+                el.style.width = clip.width;
+                el.style.flexShrink = '0';
+                if (clip.style) el.style.cssText += clip.style;
+                el.innerText = clip.text;
+                audioTrack.appendChild(el);
+            });
+
+            // Update marker
+            document.getElementById('cutMarker').style.left = cut.markerPos;
+
+            // Update active button
+            document.querySelectorAll('.cut-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        // Inisialisasi
+        window.addEventListener('load', () => {
+            setCutType('hard');
+        });
+
+        // === UJI FORMATIF ===
+        function hitungNilai() {
+            const nama = document.getElementById('nama').value;
+            const nis = document.getElementById('nis').value;
+            const tanggal = document.getElementById('tanggal').value;
+            const kelas = document.getElementById('kelas').value;
+
+            if (!nama || !nis || !tanggal || !kelas) {
+                alert("⚠️ Mohon lengkapi semua Data Siswa terlebih dahulu!");
+                return;
+            }
+
+            const kunciJawaban = {
+                q1: 'b',  // Fine Cut
+                q2: 'b',  // J-Cut
+                q3: 'c',  // Match Cut
+                q4: 'a',  // Cutaway
+                q5: 'b',  // Cutting on Action
+                q6: 'c',  // Continuity
+                q7: 'b',  // Eye-Line Match
+                q8: 'b',  // Aksi, komedi, montase, trailer
+                q9: 'c',  // Ripple Edit
+                q10: 'b'  // Script Supervisor
+            };
+
+            let skorPG = 0;
+            let terjawab = 0;
+
+            for (let i = 1; i <= 10; i++) {
+                const jawaban = document.querySelector(`input[name="q${i}"]:checked`);
+                if (jawaban) {
+                    terjawab++;
+                    if (jawaban.value === kunciJawaban[`q${i}`]) {
+                        skorPG += 10;
+                    }
+                }
+            }
+
+            if (terjawab < 10) {
+                alert(`⚠️ Mohon lengkapi semua 10 soal pilihan ganda terlebih dahulu! (Baru terjawab ${terjawab})`);
+                return;
+            }
+
+            let essayKosong = false;
+            for (let i = 1; i <= 5; i++) {
+                if (document.querySelector(`textarea[name="essay${i}"]`).value.trim() === "") {
+                    essayKosong = true;
+                    break;
+                }
+            }
+
+            if (essayKosong) {
+                alert("⚠️ Mohon isi semua 5 soal essay terlebih dahulu!");
+                return;
+            }
+
+            document.getElementById('skorTotal').innerText = skorPG;
+            document.getElementById('detailSkor').innerText = `Bagian A (PG): ${skorPG}/100 | Bagian B (Essay): Menunggu Penilaian Guru`;
+            document.getElementById('hasilNilai').classList.remove('hidden');
+            
+            document.getElementById('hasilNilai').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            alert(`✅ Jawaban berhasil diproses!\n\nNama: ${nama}\nNIS: ${nis}\nKelas: ${kelas}\nSkor Sementara (Pilihan Ganda): ${skorPG}/100\n\nCatatan: Bagian Essay akan dinilai secara manual oleh guru.`);
+        }
+    </script>
+
+</body>
+</html>

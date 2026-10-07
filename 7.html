@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pertemuan 7: Teknik Perekaman Audio dan Foley</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        luxury: {
+                            900: '#0B0F19',
+                            800: '#151B2B',
+                            700: '#1E293B',
+                            gold: '#D4AF37',
+                            goldLight: '#F3E5AB',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(21, 27, 43, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #D4AF37 0%, #F3E5AB 50%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hover-lift {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px -5px rgba(212, 175, 55, 0.15);
+        }
+        .quiz-container::-webkit-scrollbar { width: 8px; }
+        .quiz-container::-webkit-scrollbar-track { background: #151B2B; }
+        .quiz-container::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 4px; }
+
+        /* Polar Pattern Simulator */
+        .polar-canvas {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1/1;
+            max-width: 400px;
+            margin: 0 auto;
+            background: radial-gradient(circle at center, rgba(212, 175, 55, 0.05) 0%, transparent 70%);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 50%;
+            overflow: hidden;
+        }
+        .polar-grid {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+        .polar-grid circle {
+            fill: none;
+            stroke: rgba(212, 175, 55, 0.15);
+            stroke-width: 1;
+        }
+        .polar-grid line {
+            stroke: rgba(212, 175, 55, 0.1);
+            stroke-width: 1;
+        }
+        .polar-pattern {
+            position: absolute;
+            inset: 0;
+            transition: all 0.5s ease;
+        }
+        .mic-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: #D4AF37;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            z-index: 10;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+        }
+        .mic-btn {
+            transition: all 0.2s ease;
+        }
+        .mic-btn.active {
+            background: #D4AF37 !important;
+            color: #0B0F19 !important;
+            border-color: #D4AF37 !important;
+        }
+
+        /* Waveform Animation */
+        .waveform {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            height: 40px;
+        }
+        .waveform-bar {
+            width: 3px;
+            background: linear-gradient(to top, #D4AF37, #F3E5AB);
+            border-radius: 2px;
+            animation: wave 1.2s ease-in-out infinite;
+        }
+        @keyframes wave {
+            0%, 100% { height: 20%; }
+            50% { height: 100%; }
+        }
+    </style>
+</head>
+<body class="bg-luxury-900 text-gray-200 font-sans antialiased selection:bg-luxury-gold selection:text-luxury-900">
+
+    <!-- Navigasi -->
+    <nav class="fixed w-full z-50 glass border-b border-luxury-gold/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <a href="index.html" class="font-serif text-lg font-semibold text-white tracking-wide hover:text-luxury-gold transition">
+                        ← Kembali ke Beranda
+                    </a>
+                </div>
+                <div class="hidden md:flex space-x-6 text-sm font-medium">
+                    <a href="#materi" class="hover:text-luxury-gold transition">Materi</a>
+                    <a href="#simulator" class="hover:text-luxury-gold transition">Simulator</a>
+                    <a href="#uji-formatif" class="px-4 py-2 bg-luxury-gold text-luxury-900 font-bold rounded-full hover:bg-yellow-400 transition">Uji Formatif</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Materi -->
+    <header class="pt-32 pb-16 bg-gradient-to-b from-luxury-800 to-luxury-900 border-b border-luxury-gold/10">
+        <div class="max-w-5xl mx-auto px-4 text-center">
+            <span class="inline-block px-4 py-1 rounded-full border border-luxury-gold/30 bg-luxury-gold/10 text-luxury-gold text-xs font-bold tracking-widest uppercase mb-4">
+                Pertemuan 7 dari 16
+            </span>
+            <h1 class="font-serif text-4xl md:text-5xl font-bold text-white mb-6">
+                Teknik Perekaman Audio <br><span class="gold-gradient-text">& Seni Foley</span>
+            </h1>
+            <p class="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
+                Menguasai fondasi audio profesional — dari karakteristik gelombang suara, pemilihan mikrofon, teknik perekaman dialog, hingga seni Foley yang menghidupkan visual dengan efek suara tiruan yang imersif.
+            </p>
+            <div class="mt-8 flex justify-center gap-4">
+                <a href="6.html" class="text-sm text-gray-400 hover:text-luxury-gold transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    Bab Sebelumnya
+                </a>
+                <span class="text-gray-600">|</span>
+                <a href="8.html" class="text-sm text-luxury-gold hover:text-white transition flex items-center gap-2 font-semibold">
+                    UTS (Pertemuan 8)
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Konten Utama -->
+    <main id="materi" class="max-w-5xl mx-auto px-4 py-16 space-y-16">
+
+        <!-- Pendahuluan -->
+        <section class="glass rounded-2xl p-8 md:p-10 border-l-4 border-luxury-gold">
+            <h2 class="font-serif text-2xl font-bold text-white mb-4">Pendahuluan</h2>
+            <p class="text-gray-300 leading-relaxed mb-4">
+                Ada pepatah terkenal di dunia sinema: <em class="text-luxury-gold">"Audio adalah 50% dari pengalaman menonton."</em> Penonton mungkin mentolerir gambar yang sedikit <em>out of focus</em>, tetapi mereka akan langsung menutup video jika suaranya buruk — bergema, berisik, atau tidak jelas. Audio yang jernih dan imersif adalah <strong class="text-luxury-gold">jembatan tak terlihat</strong> yang membawa penonton masuk ke dalam dunia cerita.
+            </p>
+            <p class="text-gray-300 leading-relaxed">
+                Pertemuan ini akan membawa Anda menyelami dunia audio profesional: memahami sifat dasar gelombang suara, mengenal berbagai jenis mikrofon dan karakternya, menguasai teknik perekaman yang benar, serta berkenalan dengan <strong class="text-luxury-gold">Foley</strong> — seni kuno yang menghidupkan visual dengan efek suara tiruan yang dibuat manual. Inilah yang membedakan produksi amatir dengan produksi kelas dunia.
+            </p>
+        </section>
+
+        <!-- Konsep Kunci -->
+        <section>
+            <h2 class="font-serif text-2xl font-bold text-luxury-gold mb-6 flex items-center gap-3">
+                <span class="text-3xl">🔑</span> Konsep Kunci
+            </h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🎵</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Gelombang Suara</h3>
+                    <p class="text-sm text-gray-400">Frekuensi (Hz), amplitudo (dB), sample rate (kHz), dan bit depth — fondasi fisika audio digital.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🎤</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Jenis Mikrofon</h3>
+                    <p class="text-sm text-gray-400">Dynamic, Condenser, Ribbon, Lavalier, Shotgun — masing-masing memiliki karakter dan kegunaan spesifik.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🎯</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Pola Polar</h3>
+                    <p class="text-sm text-gray-400">Cardioid, Omnidirectional, Figure-8, Shotgun — menentukan dari arah mana mikrofon menangkap suara.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">📡</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Mic Placement</h3>
+                    <p class="text-sm text-gray-400">Teknik penempatan mikrofon, jarak optimal, dan <em>proximity effect</em> untuk hasil rekaman terbaik.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🎚️</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Gain Staging</h3>
+                    <p class="text-sm text-gray-400">Mengatur level input yang tepat — tidak terlalu rendah (noise) dan tidak terlalu tinggi (clipping/distorsi).</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">👣</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Foley Art</h3>
+                    <p class="text-sm text-gray-400">Seni menciptakan efek suara tiruan secara manual (langkah kaki, pintu, kain) untuk memperkuat visual.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simulator Pola Polar Mikrofon -->
+        <section id="simulator" class="bg-gradient-to-br from-luxury-800 to-luxury-900 rounded-2xl p-8 border border-luxury-gold/20">
+            <h2 class="font-serif text-2xl font-bold text-white mb-2 flex items-center gap-3">
+                <span class="text-3xl">🎛️</span> Simulator Pola Polar Mikrofon
+            </h2>
+            <p class="text-gray-400 text-sm mb-6">Pilih jenis mikrofon untuk melihat area tangkapan suaranya. Area berwarna emas menunjukkan arah suara yang ditangkap paling kuat.</p>
+
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <!-- Polar Pattern Visual -->
+                <div>
+                    <div class="polar-canvas">
+                        <!-- Grid Circles -->
+                        <svg class="polar-grid" viewBox="0 0 400 400">
+                            <circle cx="200" cy="200" r="50"/>
+                            <circle cx="200" cy="200" r="100"/>
+                            <circle cx="200" cy="200" r="150"/>
+                            <circle cx="200" cy="200" r="195"/>
+                            <line x1="200" y1="5" x2="200" y2="395"/>
+                            <line x1="5" y1="200" x2="395" y2="200"/>
+                            <line x1="60" y1="60" x2="340" y2="340"/>
+                            <line x1="340" y1="60" x2="60" y2="340"/>
+                        </svg>
+                        
+                        <!-- Polar Pattern Shape -->
+                        <svg class="polar-pattern" viewBox="0 0 400 400" id="polarShape">
+                            <path id="patternPath" d="" fill="rgba(212, 175, 55, 0.3)" stroke="#D4AF37" stroke-width="2"/>
+                        </svg>
+
+                        <!-- Mic Icon -->
+                        <div class="mic-icon">🎤</div>
+
+                        <!-- Direction Labels -->
+                        <div class="absolute top-2 left-1/2 -translate-x-1/2 text-xs text-luxury-gold font-bold">DEPAN</div>
+                        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-gray-500">BELAKANG</div>
+                        <div class="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-500">KIRI</div>
+                        <div class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500">KANAN</div>
+                    </div>
+                </div>
+
+                <!-- Kontrol & Info -->
+                <div class="space-y-4">
+                    <p class="text-sm font-bold text-luxury-gold">Pilih Jenis Mikrofon:</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setPattern('cardioid')" class="mic-btn active bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🎤 Cardioid</button>
+                        <button onclick="setPattern('omni')" class="mic-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🌐 Omnidirectional</button>
+                        <button onclick="setPattern('figure8')" class="mic-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🎯 Figure-8</button>
+                        <button onclick="setPattern('shotgun')" class="mic-btn bg-luxury-700 text-white text-xs py-3 px-3 rounded-lg border border-luxury-gold/20 hover:bg-luxury-gold hover:text-luxury-900 transition">🔫 Shotgun</button>
+                    </div>
+
+                    <div class="bg-luxury-900 p-4 rounded-lg border border-luxury-gold/20">
+                        <p class="text-sm font-bold text-luxury-gold mb-1" id="micName">Cardioid</p>
+                        <p class="text-xs text-gray-400 mb-2" id="micDesc">Paling populer untuk vokal dan dialog. Menangkap suara kuat dari depan, menolak suara dari belakang dan samping.</p>
+                        <div class="text-xs text-gray-500 border-t border-luxury-gold/10 pt-2 mt-2">
+                            <p class="font-bold text-gray-300 mb-1">💡 Penggunaan Ideal:</p>
+                            <p id="micUsage">Podcast, wawancara, vokal musik, voice-over, dialog film.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Waveform Visual -->
+        <section class="bg-luxury-800 rounded-2xl p-8 border border-luxury-gold/10">
+            <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4 text-center">🎚️ Visualisasi Gelombang Audio</h3>
+            <div class="waveform">
+                <div class="waveform-bar" style="animation-delay: 0s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.1s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.2s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.3s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.4s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.5s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.6s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.7s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.8s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.9s;"></div>
+                <div class="waveform-bar" style="animation-delay: 1.0s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.1s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.3s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.5s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.7s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.9s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.2s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.4s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.6s;"></div>
+                <div class="waveform-bar" style="animation-delay: 0.8s;"></div>
+            </div>
+            <p class="text-center text-sm text-gray-400 mt-4">Audio yang baik = gelombang yang terkontrol, tidak terlalu kecil (noise) dan tidak menyentuh batas (clipping).</p>
+        </section>
+
+        <!-- Studi Kasus -->
+        <section class="bg-red-900/10 border border-red-500/20 rounded-2xl p-8">
+            <h3 class="font-serif text-xl font-bold text-red-400 mb-4 flex items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                📖 Studi Kasus: Wawancara yang Bergema dan Berisik
+            </h3>
+            <p class="text-gray-300 mb-4">
+                Seorang siswa DKV merekam wawancara di aula sekolah yang kosong menggunakan mikrofon internal kamera dari jarak 3 meter. Hasilnya: suara talent bergema parah (<em>room reverb</em>), bercampur dengan suara AC dan dengung lampu neon, serta terdengar sangat jauh dan tidak jelas. Saat proses editing, tidak ada plugin yang mampu menyelamatkan rekaman ini — audio harus direkam ulang dari awal.
+            </p>
+            <div class="bg-luxury-900/50 p-4 rounded-lg border-l-2 border-red-500">
+                <p class="text-sm text-gray-300"><strong class="text-red-400">Pembelajaran:</strong> (1) Mikrofon internal kamera tidak dirancang untuk dialog jarak jauh. (2) Ruangan kosong tanpa peredam menciptakan gema. (3) Solusi: gunakan <em>lavalier/clip-on</em> yang ditempel dekat mulut talent, atau <em>boom mic</em> yang diarahkan dari atas, dan pilih ruangan dengan banyak benda lunak (karpet, gorden, sofa) untuk meredam gema.</p>
+            </div>
+        </section>
+
+        <!-- Refleksi -->
+        <section class="bg-luxury-800 rounded-2xl p-8 border border-luxury-gold/10">
+            <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">💭 Refleksi untuk Siswa DKV</h3>
+            <p class="text-gray-300 leading-relaxed">
+                Di SMKN 1 Koto Balingka, Anda mungkin tidak memiliki studio rekaman profesional. Namun, Anda bisa menciptakan "studio darurat" dengan trik sederhana: rekam voice-over di dalam lemari pakaian yang penuh baju — kain akan meredam gema secara alami! Untuk Foley, gunakan benda sehari-hari: kelapa parut di atas seng untuk suara hujan, sepasang sepatu boots di atas kerikil untuk suara langkah di hutan, atau selada yang disobek untuk suara tulang patah. Kreativitas adalah modal utama seorang <em>sound designer</em>.
+            </p>
+        </section>
+
+        <!-- Detail Materi -->
+        <section class="space-y-8">
+            <h2 class="font-serif text-2xl font-bold text-white border-b border-luxury-gold/20 pb-2">Uraian Materi Lengkap</h2>
+            
+            <div class="space-y-8">
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">1. Dasar-Dasar Gelombang Suara</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Frekuensi (Hz):</strong> Jumlah getaran per detik. Menentukan <em>pitch</em> (tinggi-rendah nada). Pendengaran manusia: 20 Hz - 20.000 Hz.</li>
+                        <li><strong>Amplitudo (dB - Desibel):</strong> Kekuatan gelombang suara. Menentukan <em>volume</em>. 0 dB = ambang dengar, 120 dB = ambang nyeri.</li>
+                        <li><strong>Sample Rate (kHz):</strong> Jumlah "cuplikan" audio per detik. Standar video: 48 kHz. Standar CD: 44.1 kHz.</li>
+                        <li><strong>Bit Depth:</strong> Resolusi dinamis audio. 16-bit = standar CD, 24-bit = standar produksi profesional.</li>
+                        <li><strong>Format File:</strong> WAV/AIFF (lossless, untuk editing), MP3/AAC (lossy, untuk distribusi).</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">2. Jenis-Jenis Mikrofon</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎤 Dynamic Mic</h4>
+                            <p class="text-sm text-gray-300 mb-2">Tahan banting, tidak butuh phantom power, cocok untuk suara keras.</p>
+                            <p class="text-xs text-gray-400"><strong>Contoh:</strong> Shure SM58, SM57<br><strong>Use:</strong> Vokal panggung, drum, gitar amp.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🎙️ Condenser Mic</h4>
+                            <p class="text-sm text-gray-300 mb-2">Sangat sensitif, detail tinggi, butuh phantom power 48V.</p>
+                            <p class="text-xs text-gray-400"><strong>Contoh:</strong> Rode NT1, Audio-Technica AT2020<br><strong>Use:</strong> Studio vokal, voice-over, podcast.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📻 Ribbon Mic</h4>
+                            <p class="text-sm text-gray-300 mb-2">Karakter hangat, vintage, rapuh. Membutuhkan penanganan hati-hati.</p>
+                            <p class="text-xs text-gray-400"><strong>Contoh:</strong> Royer R-121<br><strong>Use:</strong> Brass, guitar amp, vokal hangat.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">🔫 Shotgun Mic</h4>
+                            <p class="text-sm text-gray-300 mb-2">Sangat directional, menangkap suara hanya dari depan, menolak samping/belakang.</p>
+                            <p class="text-xs text-gray-400"><strong>Contoh:</strong> Sennheiser MKH416, Rode NTG3<br><strong>Use:</strong> Boom operator di film, dialog outdoor.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📎 Lavalier (Clip-on)</h4>
+                            <p class="text-sm text-gray-300 mb-2">Mikrofon kecil yang disematkan di pakaian. Tersedia wired & wireless.</p>
+                            <p class="text-xs text-gray-400"><strong>Contoh:</strong> DPA 4060, Rode Wireless GO<br><strong>Use:</strong> Wawancara, presentasi, berita TV.</p>
+                        </div>
+                        <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                            <h4 class="font-bold text-white mb-2">📱 Boundary / PZM</h4>
+                            <p class="text-sm text-gray-300 mb-2">Mikrofon pipih yang diletakkan di permukaan datar.</p>
+                            <p class="text-xs text-gray-400"><strong>Use:</strong> Conference room, rekaman ambience, teater.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">3. Pola Polar Mikrofon</h3>
+                    <p class="text-gray-300 mb-3">Pola polar menentukan dari arah mana mikrofon paling sensitif menangkap suara:</p>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Cardioid (❤️):</strong> Bentuk hati. Paling sensitif dari depan, menolak belakang. Standar untuk vokal/dialog.</li>
+                        <li><strong>Omnidirectional (🌐):</strong> Menangkap dari semua arah sama rata. Ideal untuk rekaman ambience/ruangan.</li>
+                        <li><strong>Figure-8 (🎯):</strong> Menangkap dari depan dan belakang, menolak samping. Untuk wawancara dua orang berhadapan.</li>
+                        <li><strong>Supercardioid / Hypercardioid:</strong> Lebih sempit dari cardioid, sedikit menangkap belakang. Untuk lingkungan sangat bising.</li>
+                        <li><strong>Shotgun / Lobar (🔫):</strong> Sangat sempit dan panjang di depan. Untuk dialog jarak jauh di film.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">4. Teknik Perekaman Dialog</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Mic Placement:</strong> Jarak ideal lavalier = 15-20 cm dari mulut (dada atas). Boom mic = 30-60 cm di atas kepala, diarahkan ke bawah ke mulut talent.</li>
+                        <li><strong>Proximity Effect:</strong> Fenomena bass meningkat saat mikrofon didekatkan ke sumber suara. Bisa dimanfaatkan untuk kehangatan, atau dihindari dengan high-pass filter.</li>
+                        <li><strong>Gain Staging:</strong> Level ideal dialog = -12 dB hingga -6 dB. Jangan sampai menyentuh 0 dB (clipping/distorsi tak terpulihkan).</li>
+                        <li><strong>Room Tone:</strong> Rekam 30-60 detik "keheningan" ruangan untuk digunakan sebagai latar audio konsisten saat editing.</li>
+                        <li><strong>Pop Filter:</strong> Saringan di depan mikrofon untuk mengurangi letupan konsonan "P", "B", "T".</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">5. Perekaman Ambience & Sound Effect</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Ambience:</strong> Suara latar lingkungan (hutan, kota, kafe, hujan). Gunakan omnidirectional atau stereo mic untuk kesan ruang.</li>
+                        <li><strong>Sound Effect (SFX):</strong> Suara spesifik yang mendukung aksi visual (pintu tertutup, ledakan, langkah kaki). Bisa direkam langsung atau dibuat via Foley.</li>
+                        <li><strong>Wild Track:</strong> Rekaman suara terpisah di lokasi syuting (suara spesifik yang tidak terekam saat take video) untuk digunakan di editing.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">6. Seni Foley (Foley Art)</h3>
+                    <p class="text-gray-300 mb-3">Foley adalah seni menciptakan efek suara tiruan secara sinkron dengan visual. Dinamai dari Jack Foley, pelopor teknik ini di era film bisu.</p>
+                    <div class="bg-luxury-800 p-5 rounded-xl border border-luxury-gold/10">
+                        <h4 class="font-bold text-white mb-3">🎭 Contoh Teknik Foley Klasik:</h4>
+                        <ul class="text-sm text-gray-300 space-y-2 ml-4 list-disc list-inside">
+                            <li><strong>Langkah kaki:</strong> Dikerjakan oleh <em>footstep artist</em> dengan berbagai alas kaki di atas permukaan berbeda (kayu, kerikil, karpet).</li>
+                            <li><strong>Suara kain/rustling:</strong> Menggerakkan kain tebal dekat mikrofon untuk suara pakaian karakter.</li>
+                            <li><strong>Pukulan/tinju:</strong> Meninju daging mentah atau buah semangka untuk suara benturan daging.</li>
+                            <li><strong>Tulang patah:</strong> Mematahkan seledri atau wortel dekat mikrofon.</li>
+                            <li><strong>Hujan:</strong> Menaburkan beras atau garam di atas lembaran seng.</li>
+                            <li><strong>Api berkobar:</strong> Meremas kertas selofan/plastik.</li>
+                            <li><strong>Salju diinjak:</strong> Menggenggam tepung maizena atau kantong tepung.</li>
+                            <li><strong>Kuda berlari:</strong> Mengetuk dua tempurung kelapa di atas tanah liat.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">7. Peralatan Audio Profesional</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Audio Recorder:</strong> Perangkat rekam portabel (Zoom H4n, Tascam DR-40) untuk rekaman lapangan.</li>
+                        <li><strong>Audio Interface:</strong> Penghubung mikrofon ke komputer dengan preamp berkualitas (Focusrite Scarlett).</li>
+                        <li><strong>Mixer:</strong> Menggabungkan beberapa sumber audio dan mengatur level (untuk produksi live/multi-mic).</li>
+                        <li><strong>Boom Pole:</strong> Tongkat panjang (3-5 meter) untuk memegang shotgun mic di atas kepala talent.</li>
+                        <li><strong>Windscreen / Dead Cat:</strong> Busa atau bulu sintetis untuk meredam angin saat rekaman outdoor.</li>
+                        <li><strong>Headphone Monitoring:</strong> Headphone closed-back untuk monitoring rekaman tanpa suara bocor kembali ke mic.</li>
+                        <li><strong>Kabel XLR:</strong> Konektor standar profesional dengan 3 pin, balanced, tahan interferensi.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tips Praktis -->
+        <section class="bg-gradient-to-r from-luxury-gold/10 to-transparent p-6 rounded-xl border-l-4 border-luxury-gold">
+            <h3 class="font-bold text-white mb-3">💡 Tips Praktis Perekaman Audio</h3>
+            <ul class="space-y-2 text-sm text-gray-300">
+                <li>✅ Selalu gunakan <em>headphone</em> saat merekam untuk memonitor kualitas audio secara real-time.</li>
+                <li>✅ Rekam <em>room tone</em> minimal 30 detik di setiap lokasi — ini akan menyelamatkan proses editing Anda nanti.</li>
+                <li>✅ Lakukan <em>slate/clap</em> di awal setiap take untuk memudahkan sinkronisasi audio-video di editing.</li>
+                <li>✅ Hindari ruangan dengan AC, kulkas, atau lampu neon menyala — suaranya terekam dan sulit dihilangkan.</li>
+                <li>✅ Untuk Foley, rekam di ruangan yang sangat "mati" (banyak peredam) agar suara yang dihasilkan bersih tanpa gema.</li>
+                <li>✅ Selalu backup file audio ke minimal 2 media berbeda segera setelah rekaman selesai.</li>
+                <li>✅ Catat metadata setiap file (scene, take, tanggal) untuk memudahkan pencarian di library audio Anda.</li>
+            </ul>
+        </section>
+
+        <!-- Kesimpulan & Daftar Pustaka -->
+        <section class="border-t border-luxury-gold/10 pt-8">
+            <h3 class="font-serif text-xl font-bold text-white mb-4">Kesimpulan</h3>
+            <p class="text-gray-300 mb-6">
+                Audio adalah setengah dari jiwa sebuah karya audiovisual. Menguasai teknik perekaman — dari pemilihan mikrofon yang tepat, pengaturan gain staging yang presisi, hingga penempatan mikrofon yang optimal — akan menghasilkan rekaman dialog yang jernih dan profesional. Di sisi lain, seni Foley membuka dunia kreatif di mana siswa dapat menghidupkan visual dengan efek suara tiruan yang imersif, mengubah produksi amatir menjadi karya yang terasa "hidup". Ingat: penonton mungkin memaafkan gambar yang kurang sempurna, tetapi mereka tidak akan memaafkan audio yang buruk.
+            </p>
+            <h3 class="font-serif text-lg font-bold text-luxury-gold mb-3">📚 Daftar Pustaka</h3>
+            <ul class="text-sm text-gray-400 space-y-1 list-disc list-inside">
+                <li>Altman, R. (2004). <em>Silent Film Sound</em>. New York: Columbia University Press.</li>
+                <li>Holman, T. (2010). <em>Sound for Film and Television</em> (3rd ed.). Burlington: Focal Press.</li>
+                <li>Rose, J. (2014). <em>The Location Sound Bible</em>. New York: Focal Press.</li>
+                <li>Supriadi. (2024). <em>Produksi Multimedia untuk SMK DKV</em>. Bukittinggi: FTIK UIN Bukittinggi.</li>
+                <li>Viers, R. (2012). <em>The Sound Effects Bible</em>. Studio City: Michael Wiese Productions.</li>
+            </ul>
+        </section>
+
+    </main>
+
+    <!-- UJI FORMATIF -->
+    <section id="uji-formatif" class="bg-luxury-800 py-16 border-t border-luxury-gold/20">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="text-center mb-10">
+                <h2 class="font-serif text-3xl font-bold text-white mb-2">📋 Uji Formatif Pertemuan 7</h2>
+                <p class="text-gray-400">Materi: Dasar Audio, Jenis Mikrofon, Pola Polar, Teknik Perekaman, dan Foley</p>
+                <p class="text-sm text-red-400 mt-2 font-semibold">⚠️ Mohon lengkapi semua data dan jawaban terlebih dahulu!</p>
+            </div>
+
+            <form id="quizForm" class="glass rounded-2xl p-6 md:p-10 space-y-8 quiz-container max-h-[800px] overflow-y-auto">
+                
+                <!-- Data Siswa -->
+                <div class="space-y-4 border-b border-luxury-gold/20 pb-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">📋 Data Siswa</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Nama Lengkap</label>
+                            <input type="text" id="nama" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* NIS</label>
+                            <input type="text" id="nis" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Tanggal</label>
+                            <input type="date" id="tanggal" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Kelas</label>
+                            <select id="kelas" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                                <option value="">Pilih Kelas</option>
+                                <option value="XII DKV 1">XII DKV 1</option>
+                                <option value="XII DKV 2">XII DKV 2</option>
+                                <option value="XII DKV 3">XII DKV 3</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian A: Pilihan Ganda -->
+                <div class="space-y-6 border-b border-luxury-gold/20 pb-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">📋 Bagian A – Pilihan Ganda (Skor 10/soal)</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">1. Jenis mikrofon yang sangat sensitif, membutuhkan phantom power 48V, dan ideal untuk studio vokal adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="a" class="accent-luxury-gold"> a. Dynamic</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="b" class="accent-luxury-gold"> b. Condenser</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="c" class="accent-luxury-gold"> c. Ribbon</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="d" class="accent-luxury-gold"> d. Carbon</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">2. Pola polar mikrofon yang menangkap suara dari SEMUA arah secara merata adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="a" class="accent-luxury-gold"> a. Cardioid</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="b" class="accent-luxury-gold"> b. Figure-8</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="c" class="accent-luxury-gold"> c. Omnidirectional</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="d" class="accent-luxury-gold"> d. Shotgun</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">3. Satuan yang digunakan untuk mengukur tingkat kekerasan suara adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="a" class="accent-luxury-gold"> a. Hertz (Hz)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="b" class="accent-luxury-gold"> b. Decibel (dB)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="c" class="accent-luxury-gold"> c. Watt (W)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="d" class="accent-luxury-gold"> d. Volt (V)</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">4. Mikrofon yang paling ideal untuk menangkap dialog dari jarak jauh tanpa masuk ke dalam frame gambar adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="a" class="accent-luxury-gold"> a. Lavalier</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="b" class="accent-luxury-gold"> b. Dynamic</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="c" class="accent-luxury-gold"> c. Shotgun / Boom</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="d" class="accent-luxury-gold"> d. Omnidirectional</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">5. Seni menciptakan efek suara tiruan secara manual untuk memperkuat visual disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="a" class="accent-luxury-gold"> a. Dubbing</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="b" class="accent-luxury-gold"> b. Foley</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="c" class="accent-luxury-gold"> c. Mixing</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="d" class="accent-luxury-gold"> d. Mastering</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">6. Rentang frekuensi pendengaran manusia normal adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="a" class="accent-luxury-gold"> a. 0 Hz - 100 Hz</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="b" class="accent-luxury-gold"> b. 20 Hz - 20.000 Hz</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="c" class="accent-luxury-gold"> c. 100 Hz - 1.000 Hz</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="d" class="accent-luxury-gold"> d. 1.000 Hz - 10.000 Hz</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">7. Konektor standar profesional untuk mikrofon dengan 3 pin dan balanced signal adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="a" class="accent-luxury-gold"> a. TRS (Jack 6.5 mm)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="b" class="accent-luxury-gold"> b. RCA</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="c" class="accent-luxury-gold"> c. XLR</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="d" class="accent-luxury-gold"> d. USB</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">8. Fenomena bass meningkat saat mikrofon didekatkan ke sumber suara disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="a" class="accent-luxury-gold"> a. Doppler Effect</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="b" class="accent-luxury-gold"> b. Proximity Effect</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="c" class="accent-luxury-gold"> c. Reverb Effect</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="d" class="accent-luxury-gold"> d. Phantom Effect</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">9. Sample rate standar untuk audio dalam produksi video profesional adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="a" class="accent-luxury-gold"> a. 22.05 kHz</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="b" class="accent-luxury-gold"> b. 44.1 kHz</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="c" class="accent-luxury-gold"> c. 48 kHz</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="d" class="accent-luxury-gold"> d. 96 kHz</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">10. Level audio ideal untuk dialog sebelum mencapai titik clipping (0 dB) adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="a" class="accent-luxury-gold"> a. -40 dB hingga -30 dB</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="b" class="accent-luxury-gold"> b. -12 dB hingga -6 dB</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="c" class="accent-luxury-gold"> c. -2 dB hingga 0 dB</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="d" class="accent-luxury-gold"> d. +3 dB hingga +6 dB</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian B: Essay -->
+                <div class="space-y-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">✍️ Bagian B – Essay (Skor 20/soal)</h3>
+                    <p class="text-sm text-gray-400">Jawablah pertanyaan berikut dengan jelas dan terstruktur.</p>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">1. Jelaskan perbedaan mendasar antara mikrofon Dynamic dan Condenser, termasuk kelebihan, kekurangan, dan situasi penggunaan masing-masing!</p>
+                            <textarea name="essay1" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">2. Deskripsikan 4 jenis pola polar mikrofon (Cardioid, Omnidirectional, Figure-8, Shotgun) beserta karakteristik dan situasi ideal penggunaannya!</p>
+                            <textarea name="essay2" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">3. Apa yang dimaksud dengan "Gain Staging" dalam perekaman audio? Mengapa level dialog ideal berada di -12 dB hingga -6 dB, bukan mendekati 0 dB?</p>
+                            <textarea name="essay3" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">4. Jelaskan apa itu "Room Tone" dan mengapa rekaman room tone sangat penting dalam produksi video! Bagaimana cara merekamnya dengan benar?</p>
+                            <textarea name="essay4" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">5. Berdasarkan studi kasus "Wawancara yang Bergema" di atas, rancanglah solusi teknis lengkap (pemilihan mikrofon, teknik penempatan, perlakuan ruangan) untuk memperbaiki kualitas rekaman wawancara tersebut!</p>
+                            <textarea name="essay5" rows="4" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi -->
+                <div class="pt-6 border-t border-luxury-gold/20 space-y-4">
+                    <button type="button" onclick="hitungNilai()" class="w-full bg-luxury-gold text-luxury-900 font-bold py-3 rounded-lg hover:bg-yellow-400 transition shadow-lg">
+                        ✉️ KIRIM JAWABAN & LIHAT HASIL
+                    </button>
+                    
+                    <div id="hasilNilai" class="hidden bg-luxury-900 p-6 rounded-xl border border-luxury-gold/30 text-center space-y-4">
+                        <h4 class="text-xl font-bold text-white">📊 Hasil Uji Formatif</h4>
+                        <div class="text-4xl font-serif font-bold text-luxury-gold" id="skorTotal">0</div>
+                        <p class="text-sm text-gray-400" id="detailSkor">Bagian A (PG): 0/100 | Bagian B (Essay): Dinilai Manual oleh Guru</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-4">
+                            <button type="button" onclick="alert('Simulasi: File PDF lengkap sedang diunduh...')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">📥 UNDUH PDF LENGKAP</button>
+                            <button type="button" onclick="alert('Simulasi: File skor sedang diunduh...')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">📊 UNDUH SKOR SAJA</button>
+                            <button type="button" onclick="alert('Simulasi: Email telah dikirim ke ausianggina@gmail.com')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">✉️ KIRIM EMAIL GURU</button>
+                        </div>
+                        <button type="button" onclick="location.reload()" class="text-sm text-gray-400 hover:text-white underline mt-4">🔄 MULAI ULANG</button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-luxury-900 border-t border-luxury-gold/10 py-8 text-center">
+        <p class="text-gray-500 text-sm">© 2026 AUSI ANGGINA, S.Pd — SMKN 1 KOTO BALINGKA. All rights reserved.</p>
+    </footer>
+
+    <!-- Script Simulator & Uji Formatif -->
+    <script>
+        // === SIMULATOR POLA POLAR ===
+        const patterns = {
+            cardioid: {
+                name: 'Cardioid (❤️)',
+                desc: 'Paling populer untuk vokal dan dialog. Menangkap suara kuat dari depan, menolak suara dari belakang dan samping.',
+                usage: 'Podcast, wawancara, vokal musik, voice-over, dialog film.',
+                path: 'M 200 200 Q 200 50 350 200 Q 200 350 200 200 Z'
+            },
+            omni: {
+                name: 'Omnidirectional (🌐)',
+                desc: 'Menangkap suara dari semua arah secara merata. Ideal untuk merekam ambience atau suasana ruangan.',
+                usage: 'Rekaman ambience, konferensi, choir, orkestra, sound effect ruangan.',
+                path: 'M 200 20 A 180 180 0 1 0 200 380 A 180 180 0 1 0 200 20 Z'
+            },
+            figure8: {
+                name: 'Figure-8 (🎯)',
+                desc: 'Menangkap suara dari depan dan belakang sama kuatnya, menolak suara dari samping. Ideal untuk wawancara dua orang berhadapan.',
+                usage: 'Wawancara dua orang, duet vokal, Mid-Side stereo recording.',
+                path: 'M 200 200 Q 200 50 350 200 Q 200 50 200 200 Q 200 350 50 200 Q 200 350 200 200 Z'
+            },
+            shotgun: {
+                name: 'Shotgun / Lobar (🔫)',
+                desc: 'Sangat directional — menangkap suara hanya dari depan dalam area sangat sempit dan panjang. Menolak hampir semua suara dari samping.',
+                usage: 'Boom operator di film, dialog outdoor, wildlife recording, situasi sangat bising.',
+                path: 'M 200 200 Q 200 30 250 200 Q 200 30 200 200 Z'
+            }
+        };
+
+        function setPattern(type) {
+            const p = patterns[type];
+            document.getElementById('patternPath').setAttribute('d', p.path);
+            document.getElementById('micName').innerText = p.name;
+            document.getElementById('micDesc').innerText = p.desc;
+            document.getElementById('micUsage').innerText = p.usage;
+
+            // Update active button
+            document.querySelectorAll('.mic-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        // Inisialisasi
+        window.addEventListener('load', () => {
+            document.getElementById('patternPath').setAttribute('d', patterns.cardioid.path);
+        });
+
+        // === UJI FORMATIF ===
+        function hitungNilai() {
+            const nama = document.getElementById('nama').value;
+            const nis = document.getElementById('nis').value;
+            const tanggal = document.getElementById('tanggal').value;
+            const kelas = document.getElementById('kelas').value;
+
+            if (!nama || !nis || !tanggal || !kelas) {
+                alert("⚠️ Mohon lengkapi semua Data Siswa terlebih dahulu!");
+                return;
+            }
+
+            const kunciJawaban = {
+                q1: 'b',  // Condenser
+                q2: 'c',  // Omnidirectional
+                q3: 'b',  // Decibel
+                q4: 'c',  // Shotgun / Boom
+                q5: 'b',  // Foley
+                q6: 'b',  // 20 Hz - 20.000 Hz
+                q7: 'c',  // XLR
+                q8: 'b',  // Proximity Effect
+                q9: 'c',  // 48 kHz
+                q10: 'b'  // -12 dB hingga -6 dB
+            };
+
+            let skorPG = 0;
+            let terjawab = 0;
+
+            for (let i = 1; i <= 10; i++) {
+                const jawaban = document.querySelector(`input[name="q${i}"]:checked`);
+                if (jawaban) {
+                    terjawab++;
+                    if (jawaban.value === kunciJawaban[`q${i}`]) {
+                        skorPG += 10;
+                    }
+                }
+            }
+
+            if (terjawab < 10) {
+                alert(`⚠️ Mohon lengkapi semua 10 soal pilihan ganda terlebih dahulu! (Baru terjawab ${terjawab})`);
+                return;
+            }
+
+            let essayKosong = false;
+            for (let i = 1; i <= 5; i++) {
+                if (document.querySelector(`textarea[name="essay${i}"]`).value.trim() === "") {
+                    essayKosong = true;
+                    break;
+                }
+            }
+
+            if (essayKosong) {
+                alert("⚠️ Mohon isi semua 5 soal essay terlebih dahulu!");
+                return;
+            }
+
+            document.getElementById('skorTotal').innerText = skorPG;
+            document.getElementById('detailSkor').innerText = `Bagian A (PG): ${skorPG}/100 | Bagian B (Essay): Menunggu Penilaian Guru`;
+            document.getElementById('hasilNilai').classList.remove('hidden');
+            
+            document.getElementById('hasilNilai').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            alert(`✅ Jawaban berhasil diproses!\n\nNama: ${nama}\nNIS: ${nis}\nKelas: ${kelas}\nSkor Sementara (Pilihan Ganda): ${skorPG}/100\n\nCatatan: Bagian Essay akan dinilai secara manual oleh guru.`);
+        }
+    </script>
+
+</body>
+</html>

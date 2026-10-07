@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pertemuan 4: Pengoperasian Kamera & Segitiga Eksposur</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        luxury: {
+                            900: '#0B0F19',
+                            800: '#151B2B',
+                            700: '#1E293B',
+                            gold: '#D4AF37',
+                            goldLight: '#F3E5AB',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(21, 27, 43, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #D4AF37 0%, #F3E5AB 50%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hover-lift {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px -5px rgba(212, 175, 55, 0.15);
+        }
+        .quiz-container::-webkit-scrollbar { width: 8px; }
+        .quiz-container::-webkit-scrollbar-track { background: #151B2B; }
+        .quiz-container::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 4px; }
+        /* Simulasi Segitiga Eksposur */
+        .exposure-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #1E293B;
+            border-radius: 3px;
+            outline: none;
+        }
+        .exposure-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #D4AF37;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+        .exposure-indicator {
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-luxury-900 text-gray-200 font-sans antialiased selection:bg-luxury-gold selection:text-luxury-900">
+
+    <!-- Navigasi -->
+    <nav class="fixed w-full z-50 glass border-b border-luxury-gold/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <a href="index.html" class="font-serif text-lg font-semibold text-white tracking-wide hover:text-luxury-gold transition">
+                        ← Kembali ke Beranda
+                    </a>
+                </div>
+                <div class="hidden md:flex space-x-6 text-sm font-medium">
+                    <a href="#materi" class="hover:text-luxury-gold transition">Materi</a>
+                    <a href="#simulator" class="hover:text-luxury-gold transition">Simulator</a>
+                    <a href="#uji-formatif" class="px-4 py-2 bg-luxury-gold text-luxury-900 font-bold rounded-full hover:bg-yellow-400 transition">Uji Formatif</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Materi -->
+    <header class="pt-32 pb-16 bg-gradient-to-b from-luxury-800 to-luxury-900 border-b border-luxury-gold/10">
+        <div class="max-w-5xl mx-auto px-4 text-center">
+            <span class="inline-block px-4 py-1 rounded-full border border-luxury-gold/30 bg-luxury-gold/10 text-luxury-gold text-xs font-bold tracking-widest uppercase mb-4">
+                Pertemuan 4 dari 16
+            </span>
+            <h1 class="font-serif text-4xl md:text-5xl font-bold text-white mb-6">
+                Pengoperasian Kamera & <span class="gold-gradient-text">Segitiga Eksposur</span>
+            </h1>
+            <p class="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
+                Menguasai anatomi kamera, memahami interaksi tiga pilar eksposur (Aperture, Shutter Speed, ISO), dan menerapkan teknik pengoperasian kamera profesional untuk menghasilkan footage sinematik yang presisi.
+            </p>
+            <div class="mt-8 flex justify-center gap-4">
+                <a href="3.html" class="text-sm text-gray-400 hover:text-luxury-gold transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    Bab Sebelumnya
+                </a>
+                <span class="text-gray-600">|</span>
+                <a href="5.html" class="text-sm text-luxury-gold hover:text-white transition flex items-center gap-2 font-semibold">
+                    Bab Selanjutnya: Teknik Pengambilan Gambar
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Konten Utama -->
+    <main id="materi" class="max-w-5xl mx-auto px-4 py-16 space-y-16">
+
+        <!-- Pendahuluan -->
+        <section class="glass rounded-2xl p-8 md:p-10 border-l-4 border-luxury-gold">
+            <h2 class="font-serif text-2xl font-bold text-white mb-4">Pendahuluan</h2>
+            <p class="text-gray-300 leading-relaxed mb-4">
+                Kamera adalah mata dari seorang sineas. Tanpa pemahaman mendalam tentang cara kerja kamera, bahkan sutradara dengan visi paling brilian sekalipun tidak akan mampu menerjemahkan imajinasinya menjadi gambar yang hidup. Pengoperasian kamera bukan sekadar menekan tombol <em>record</em> — ia adalah seni mengendalikan cahaya.
+            </p>
+            <p class="text-gray-300 leading-relaxed">
+                Pertemuan ini akan membawa Anda menyelami inti dari fotografi dan videografi: <strong class="text-luxury-gold">Segitiga Eksposur</strong>. Tiga variabel — Aperture, Shutter Speed, dan ISO — yang saling berinteraksi untuk menentukan bagaimana cahaya ditangkap oleh sensor kamera. Menguasai ketiganya adalah kunci untuk beralih dari "sekadar merekam" menjadi "menciptakan visual".
+            </p>
+        </section>
+
+        <!-- Konsep Kunci -->
+        <section>
+            <h2 class="font-serif text-2xl font-bold text-luxury-gold mb-6 flex items-center gap-3">
+                <span class="text-3xl">🔑</span> Konsep Kunci
+            </h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">📷</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Anatomi Kamera</h3>
+                    <p class="text-sm text-gray-400">Memahami komponen utama: body, lensa, sensor, viewfinder, dan kontrol manual untuk pengoperasian yang presisi.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🔆</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Aperture (f-stop)</h3>
+                    <p class="text-sm text-gray-400">Bukaan diafragma lensa yang mengatur jumlah cahaya masuk dan kedalaman ruang tajam (depth of field).</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">⏱️</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Shutter Speed</h3>
+                    <p class="text-sm text-gray-400">Durasi sensor terekspos cahaya. Mengontrol motion blur dan kesan gerakan dalam frame video.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">📶</div>
+                    <h3 class="font-bold text-white text-lg mb-2">ISO</h3>
+                    <p class="text-sm text-gray-400">Tingkat sensitivitas sensor terhadap cahaya. Nilai tinggi = lebih terang, namun meningkatkan noise.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🔺</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Segitiga Eksposur</h3>
+                    <p class="text-sm text-gray-400">Hubungan timbal-balik antara ketiga elemen di atas untuk menghasilkan eksposur yang seimbang.</p>
+                </div>
+                <div class="bg-luxury-800 p-6 rounded-xl border border-luxury-gold/10 hover-lift">
+                    <div class="text-3xl mb-3">🛠️</div>
+                    <h3 class="font-bold text-white text-lg mb-2">Perawatan Kamera</h3>
+                    <p class="text-sm text-gray-400">Prosedur pembersihan lensa, penyimpanan, dan penanganan untuk menjaga performa alat tetap optimal.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simulator Interaktif Segitiga Eksposur -->
+        <section id="simulator" class="bg-gradient-to-br from-luxury-800 to-luxury-900 rounded-2xl p-8 border border-luxury-gold/20">
+            <h2 class="font-serif text-2xl font-bold text-white mb-2 flex items-center gap-3">
+                <span class="text-3xl">🎛️</span> Simulator Interaktif: Segitiga Eksposur
+            </h2>
+            <p class="text-gray-400 text-sm mb-6">Geser slider di bawah untuk melihat bagaimana Aperture, Shutter Speed, dan ISO mempengaruhi eksposur gambar secara real-time.</p>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Preview Visual -->
+                <div class="bg-luxury-900 rounded-xl p-6 flex flex-col items-center justify-center border border-luxury-gold/10">
+                    <div id="exposurePreview" class="w-48 h-48 rounded-full exposure-indicator mb-4 flex items-center justify-center text-6xl" style="background: rgb(128, 128, 128);">
+                        🌄
+                    </div>
+                    <p class="text-sm text-gray-400 mb-2">Status Eksposur:</p>
+                    <p id="exposureStatus" class="text-xl font-bold text-luxury-gold">Normal (0 EV)</p>
+                    <p id="exposureDescription" class="text-xs text-gray-500 mt-2 text-center">Eksposur seimbang — gambar terlihat natural.</p>
+                </div>
+
+                <!-- Kontrol Slider -->
+                <div class="space-y-6">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-bold text-luxury-gold">🔆 Aperture (f-stop)</label>
+                            <span id="apertureValue" class="text-sm text-white font-mono">f/4.0</span>
+                        </div>
+                        <input type="range" id="apertureSlider" min="1" max="8" value="4" class="exposure-slider">
+                        <p class="text-xs text-gray-500 mt-1">Kiri: f/1.4 (bukaan lebar, DoF tipis) → Kanan: f/22 (bukaan sempit, DoF tebal)</p>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-bold text-luxury-gold">⏱️ Shutter Speed</label>
+                            <span id="shutterValue" class="text-sm text-white font-mono">1/50</span>
+                        </div>
+                        <input type="range" id="shutterSlider" min="1" max="8" value="4" class="exposure-slider">
+                        <p class="text-xs text-gray-500 mt-1">Kiri: 1/15 (lambat, motion blur) → Kanan: 1/2000 (cepat, freeze motion)</p>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-bold text-luxury-gold">📶 ISO</label>
+                            <span id="isoValue" class="text-sm text-white font-mono">400</span>
+                        </div>
+                        <input type="range" id="isoSlider" min="1" max="8" value="4" class="exposure-slider">
+                        <p class="text-xs text-gray-500 mt-1">Kiri: ISO 100 (bersih) → Kanan: ISO 12800 (sensitif, banyak noise)</p>
+                    </div>
+
+                    <button onclick="resetSimulator()" class="w-full bg-luxury-700 text-white text-sm py-2 rounded-lg hover:bg-luxury-600 transition">🔄 Reset ke Normal</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Studi Kasus -->
+        <section class="bg-red-900/10 border border-red-500/20 rounded-2xl p-8">
+            <h3 class="font-serif text-xl font-bold text-red-400 mb-4 flex items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                📖 Studi Kasus: ISO Tinggi di Siang Hari
+            </h3>
+            <p class="text-gray-300 mb-4">
+                Seorang siswa DKV merekam video wawancara di luar ruangan pada siang hari yang terik. Karena tidak memahami segitiga eksposur, ia membiarkan kamera pada mode otomatis yang memilih ISO 3200. Hasilnya, video terlihat sangat <em>grainy</em> (banyak noise), warna tidak jernih, dan kualitas gambar setara kamera CCTV murah — padahal ia menggunakan kamera DSLR profesional seharga puluhan juta rupiah.
+            </p>
+            <div class="bg-luxury-900/50 p-4 rounded-lg border-l-2 border-red-500">
+                <p class="text-sm text-gray-300"><strong class="text-red-400">Pembelajaran:</strong> Di kondisi cahaya terang, ISO harus dijaga serendah mungkin (100-400). Jika gambar terlalu terang, solusinya adalah menutup aperture (naikkan f-number) atau meningkatkan shutter speed — bukan membiarkan ISO tinggi. Alat mahal tidak berguna jika operatornya tidak memahami prinsip dasarnya.</p>
+            </div>
+        </section>
+
+        <!-- Refleksi -->
+        <section class="bg-luxury-800 rounded-2xl p-8 border border-luxury-gold/10">
+            <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">💭 Refleksi untuk Siswa DKV</h3>
+            <p class="text-gray-300 leading-relaxed">
+                Di SMKN 1 Koto Balingka, Anda mungkin hanya memiliki akses ke kamera DSLR entry-level atau bahkan <em>smartphone</em>. Namun, prinsip segitiga eksposur tetap sama — baik di kamera Rp 5 juta maupun Rp 150 juta. Justru di sinilah kreativitas diuji: bagaimana menghasilkan gambar sinematik dengan peralatan terbatas. Gunakan mode <em>Manual</em> atau <em>Pro Mode</em> di smartphone Anda, dan mulailah bereksperimen dengan ketiga variabel ini.
+            </p>
+        </section>
+
+        <!-- Detail Materi -->
+        <section class="space-y-8">
+            <h2 class="font-serif text-2xl font-bold text-white border-b border-luxury-gold/20 pb-2">Uraian Materi Lengkap</h2>
+            
+            <div class="space-y-8">
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">1. Jenis-Jenis Kamera untuk Produksi Video</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>DSLR (Digital Single-Lens Reflex):</strong> Kamera dengan mirror internal, populer di kalangan pemula-menengah. Contoh: Canon 60D, Nikon D7200.</li>
+                        <li><strong>Mirrorless:</strong> Tanpa mirror, lebih ringkas, autofokus cepat. Contoh: Sony A7III, Fujifilm X-T4.</li>
+                        <li><strong>Camcorder:</strong> Dirancang khusus untuk video, ergonomi nyaman untuk handheld panjang. Contoh: Sony PXW-FS5.</li>
+                        <li><strong>Cinema Camera:</strong> Kelas profesional dengan dynamic range tinggi dan codec sinematik. Contoh: Blackmagic Pocket, RED Komodo.</li>
+                        <li><strong>Smartphone:</strong> Alternatif modern dengan mode Pro/Manual. Cocok untuk konten media sosial dan produksi terbatas.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">2. Anatomi dan Komponen Utama Kamera</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Body:</strong> Rumah kamera yang menampung sensor, prosesor, dan kontrol.</li>
+                        <li><strong>Lensa (Lens):</strong> Optik yang memfokuskan cahaya ke sensor. Memiliki focal length (mm) dan aperture maksimum.</li>
+                        <li><strong>Sensor:</strong> "Retina" kamera yang menangkap cahaya. Ukuran sensor (Full Frame, APS-C, Micro 4/3) mempengaruhi kualitas gambar.</li>
+                        <li><strong>Viewfinder / LCD:</strong> Alat bantu framing dan monitoring gambar.</li>
+                        <li><strong>Media Penyimpanan:</strong> SD Card, CFexpress, atau SSD internal untuk menyimpan footage.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">3. Pilar 1: Aperture (f-stop)</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Definisi:</strong> Bukaan diafragma di dalam lensa yang mengatur seberapa banyak cahaya masuk ke sensor.</li>
+                        <li><strong>Notasi:</strong> Ditulis sebagai f/1.4, f/2.8, f/4, f/8, f/16, f/22. Semakin kecil angka, semakin besar bukaan.</li>
+                        <li><strong>Efek Samping — Depth of Field (DoF):</strong>
+                            <ul class="list-circle list-inside ml-6 mt-1 text-gray-400">
+                                <li>Aperture besar (f/1.4 - f/2.8) = DoF tipis (latar blur/bokeh) → cocok untuk portrait, wawancara.</li>
+                                <li>Aperture kecil (f/8 - f/16) = DoF tebal (semua tajam) → cocok untuk landscape, grup.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">4. Pilar 2: Shutter Speed</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Definisi:</strong> Durasi shutter terbuka sehingga sensor menerima cahaya.</li>
+                        <li><strong>Notasi:</strong> 1/30, 1/60, 1/125, 1/500, 1/2000 detik.</li>
+                        <li><strong>Aturan 180° untuk Video:</strong> Shutter speed ideal = 2x frame rate. Jika merekam 24 fps → shutter 1/50. Jika 60 fps → shutter 1/120. Aturan ini menghasilkan motion blur yang natural.</li>
+                        <li><strong>Efek Kreatif:</strong>
+                            <ul class="list-circle list-inside ml-6 mt-1 text-gray-400">
+                                <li>Shutter lambat (1/15) = motion blur dramatis (aliran air halus).</li>
+                                <li>Shutter cepat (1/2000) = freeze motion (tetesan air beku).</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">5. Pilar 3: ISO</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Definisi:</strong> Tingkat sensitivitas sensor terhadap cahaya.</li>
+                        <li><strong>Skala:</strong> ISO 100, 200, 400, 800, 1600, 3200, 6400, 12800.</li>
+                        <li><strong>Trade-off:</strong> Semakin tinggi ISO, gambar semakin terang, namun <em>noise</em> (bintik-bintik kasar) juga meningkat.</li>
+                        <li><strong>Praktik Terbaik:</strong> Gunakan ISO serendah mungkin (100-400) di kondisi terang. Naikkan hanya ketika cahaya minim dan aperture/shutter sudah di batas maksimal.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">6. Interaksi Segitiga Eksposur</h3>
+                    <p class="text-gray-300 mb-3">Ketiga elemen di atas saling mempengaruhi. Jika Anda mengubah satu, Anda harus mengkompensasi dengan yang lain untuk menjaga eksposur tetap seimbang:</p>
+                    <div class="bg-luxury-900/50 p-4 rounded-lg border border-luxury-gold/20">
+                        <p class="text-sm text-gray-300"><strong class="text-luxury-gold">Contoh Kasus:</strong> Anda ingin background lebih blur (buka aperture dari f/8 ke f/2.8 → cahaya masuk 4x lebih banyak). Untuk menjaga eksposur tetap seimbang, Anda harus: <br>
+                        → Meningkatkan shutter speed (1/50 ke 1/200), <strong>ATAU</strong> <br>
+                        → Menurunkan ISO (400 ke 100), <strong>ATAU</strong> <br>
+                        → Kombinasi keduanya.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">7. Mode Pengoperasian Kamera</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li><strong>Auto Mode:</strong> Kamera menentukan semua. Praktis tapi tidak kreatif.</li>
+                        <li><strong>Program (P):</strong> Kamera mengatur aperture & shutter, Anda mengatur ISO & white balance.</li>
+                        <li><strong>Aperture Priority (A/Av):</strong> Anda mengatur aperture, kamera menyesuaikan shutter. Ideal untuk mengontrol DoF.</li>
+                        <li><strong>Shutter Priority (S/Tv):</strong> Anda mengatur shutter, kamera menyesuaikan aperture. Ideal untuk mengontrol motion.</li>
+                        <li><strong>Manual (M):</strong> Anda mengatur semuanya. Wajib untuk produksi video profesional.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-luxury-gold mb-3">8. Perawatan Kamera Profesional</h3>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2 ml-4">
+                        <li>✅ Bersihkan lensa dengan microfiber cloth dan lens cleaner khusus — jangan gunakan kain kasar atau tisu.</li>
+                        <li>✅ Gunakan silica gel di dalam tas kamera untuk mencegah jamur pada lensa.</li>
+                        <li>✅ Lepaskan baterai jika kamera tidak digunakan dalam waktu lama (> 1 minggu).</li>
+                        <li>✅ Hindari mengganti lensa di tempat berdebu atau berangin kencang untuk mencegah debu masuk ke sensor.</li>
+                        <li>✅ Backup footage ke minimal 2 media berbeda segera setelah syuting selesai.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tips Praktis -->
+        <section class="bg-gradient-to-r from-luxury-gold/10 to-transparent p-6 rounded-xl border-l-4 border-luxury-gold">
+            <h3 class="font-bold text-white mb-3">💡 Tips Praktis Pengoperasian Kamera</h3>
+            <ul class="space-y-2 text-sm text-gray-300">
+                <li>✅ Mulailah dengan mode <em>Aperture Priority</em> untuk memahami hubungan aperture dan DoF, lalu beralih ke <em>Manual</em>.</li>
+                <li>✅ Gunakan histogram di layar kamera untuk memastikan eksposur akurat — jangan hanya mengandalkan mata.</li>
+                <li>✅ Untuk video sinematik, kunci shutter speed di 1/50 (untuk 24 fps) dan atur eksposur hanya dengan aperture + ISO + ND filter.</li>
+                <li>✅ Investasikan pada <em>ND Filter</em> (Neutral Density) — ini seperti "kacamata hitam" untuk kamera, memungkinkan Anda menggunakan aperture lebar di siang hari tanpa overexpose.</li>
+            </ul>
+        </section>
+
+        <!-- Kesimpulan & Daftar Pustaka -->
+        <section class="border-t border-luxury-gold/10 pt-8">
+            <h3 class="font-serif text-xl font-bold text-white mb-4">Kesimpulan</h3>
+            <p class="text-gray-300 mb-6">
+                Pengoperasian kamera yang baik adalah fondasi dari setiap karya audiovisual yang berkualitas. Segitiga eksposur (Aperture, Shutter Speed, ISO) adalah bahasa universal fotografi dan videografi — dipahami oleh semua sineas di seluruh dunia. Dengan menguasai interaksi ketiga variabel ini, Anda tidak lagi bergantung pada mode otomatis kamera, melainkan mampu menerjemahkan visi kreatif menjadi gambar yang presisi, sinematik, dan penuh makna.
+            </p>
+            <h3 class="font-serif text-lg font-bold text-luxury-gold mb-3">📚 Daftar Pustaka</h3>
+            <ul class="text-sm text-gray-400 space-y-1 list-disc list-inside">
+                <li>Brown, B. (2013). <em>The Filmmaker's Handbook: A Comprehensive Guide for the Digital Age</em>. New York: Plume.</li>
+                <li>Setiawan, A. (2022). <em>Teknik Sinematografi Dasar untuk Pemula</em>. Jakarta: Erlangga.</li>
+                <li>Yudiyanto, A. (2020). <em>Kamera dan Eksposur: Panduan Praktis Fotografer Indonesia</em>. Yogyakarta: Andi Publisher.</li>
+                <li>Supriadi. (2024). <em>Produksi Multimedia untuk SMK DKV</em>. Bukittinggi: FTIK UIN Bukittinggi.</li>
+            </ul>
+        </section>
+
+    </main>
+
+    <!-- UJI FORMATIF -->
+    <section id="uji-formatif" class="bg-luxury-800 py-16 border-t border-luxury-gold/20">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="text-center mb-10">
+                <h2 class="font-serif text-3xl font-bold text-white mb-2">📋 Uji Formatif Pertemuan 4</h2>
+                <p class="text-gray-400">Materi: Pengoperasian Kamera, Segitiga Eksposur, dan Perawatan Alat</p>
+                <p class="text-sm text-red-400 mt-2 font-semibold">⚠️ Mohon lengkapi semua data dan jawaban terlebih dahulu!</p>
+            </div>
+
+            <form id="quizForm" class="glass rounded-2xl p-6 md:p-10 space-y-8 quiz-container max-h-[800px] overflow-y-auto">
+                
+                <!-- Data Siswa -->
+                <div class="space-y-4 border-b border-luxury-gold/20 pb-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">📋 Data Siswa</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Nama Lengkap</label>
+                            <input type="text" id="nama" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* NIS</label>
+                            <input type="text" id="nis" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Tanggal</label>
+                            <input type="date" id="tanggal" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">* Kelas</label>
+                            <select id="kelas" required class="w-full bg-luxury-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none">
+                                <option value="">Pilih Kelas</option>
+                                <option value="XII DKV 1">XII DKV 1</option>
+                                <option value="XII DKV 2">XII DKV 2</option>
+                                <option value="XII DKV 3">XII DKV 3</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian A: Pilihan Ganda -->
+                <div class="space-y-6 border-b border-luxury-gold/20 pb-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">📋 Bagian A – Pilihan Ganda (Skor 10/soal)</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">1. Tiga variabel yang membentuk Segitiga Eksposur adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="a" class="accent-luxury-gold"> a. Lensa, Sensor, dan Baterai</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="b" class="accent-luxury-gold"> b. Aperture, Shutter Speed, dan ISO</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="c" class="accent-luxury-gold"> c. White Balance, Frame Rate, dan Resolusi</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q1" value="d" class="accent-luxury-gold"> d. Key Light, Fill Light, dan Back Light</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">2. Aperture f/1.4 dibandingkan f/16 akan menghasilkan...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="a" class="accent-luxury-gold"> a. Depth of Field lebih tipis (background blur)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="b" class="accent-luxury-gold"> b. Depth of Field lebih tebal (semua tajam)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="c" class="accent-luxury-gold"> c. Gambar lebih gelap</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q2" value="d" class="accent-luxury-gold"> d. Tidak ada perbedaan signifikan</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">3. Jika Anda merekam video pada 24 fps, shutter speed ideal menurut aturan 180° adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="a" class="accent-luxury-gold"> a. 1/24</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="b" class="accent-luxury-gold"> b. 1/48 (atau 1/50)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="c" class="accent-luxury-gold"> c. 1/1000</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q3" value="d" class="accent-luxury-gold"> d. 1/8</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">4. ISO yang tinggi (misalnya 6400) akan menyebabkan...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="a" class="accent-luxury-gold"> a. Gambar lebih tajam</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="b" class="accent-luxury-gold"> b. Depth of Field lebih tipis</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="c" class="accent-luxury-gold"> c. Muncul noise (bintik-bintik kasar) pada gambar</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q4" value="d" class="accent-luxury-gold"> d. Warna menjadi lebih jenuh</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">5. Kamera yang TIDAK memiliki mirror internal dan umumnya lebih ringkas disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="a" class="accent-luxury-gold"> a. DSLR</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="b" class="accent-luxury-gold"> b. Mirrorless</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="c" class="accent-luxury-gold"> c. Camcorder</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q5" value="d" class="accent-luxury-gold"> d. Cinema Camera</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">6. Mode kamera yang memberikan kontrol penuh kepada pengguna atas aperture, shutter speed, dan ISO adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="a" class="accent-luxury-gold"> a. Auto Mode</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="b" class="accent-luxury-gold"> b. Aperture Priority (A/Av)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="c" class="accent-luxury-gold"> c. Shutter Priority (S/Tv)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q6" value="d" class="accent-luxury-gold"> d. Manual (M)</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">7. Alat yang berfungsi seperti "kacamata hitam" untuk kamera, memungkinkan penggunaan aperture lebar di siang hari tanpa overexpose, disebut...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="a" class="accent-luxury-gold"> a. UV Filter</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="b" class="accent-luxury-gold"> b. ND Filter (Neutral Density)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="c" class="accent-luxury-gold"> c. Polarizer Filter</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q7" value="d" class="accent-luxury-gold"> d. Lens Hood</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">8. "Depth of Field" (DoF) mengacu pada...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="a" class="accent-luxury-gold"> a. Kecepatan gerakan objek dalam frame</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="b" class="accent-luxury-gold"> b. Area ketajaman fokus dari depan hingga belakang objek</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="c" class="accent-luxury-gold"> c. Jumlah cahaya yang masuk ke sensor</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q8" value="d" class="accent-luxury-gold"> d. Durasi rekaman video</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">9. Untuk mencegah jamur tumbuh pada lensa kamera saat disimpan, langkah yang tepat adalah...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="a" class="accent-luxury-gold"> a. Menyimpan di tempat lembap</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="b" class="accent-luxury-gold"> b. Menggunakan silica gel di dalam tas kamera</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="c" class="accent-luxury-gold"> c. Membersihkan dengan air biasa</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q9" value="d" class="accent-luxury-gold"> d. Menjemur di bawah matahari langsung berjam-jam</label>
+                            </div>
+                        </div>
+
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-3">10. Shutter speed yang lambat (misalnya 1/15 detik) pada subjek bergerak akan menghasilkan...</p>
+                            <div class="space-y-2 text-sm">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="a" class="accent-luxury-gold"> a. Gambar beku (freeze motion)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="b" class="accent-luxury-gold"> b. Motion blur (efek gerakan halus)</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="c" class="accent-luxury-gold"> c. Gambar menjadi hitam total</label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="q10" value="d" class="accent-luxury-gold"> d. Background menjadi blur</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bagian B: Essay -->
+                <div class="space-y-6">
+                    <h3 class="font-bold text-luxury-gold text-lg">✍️ Bagian B – Essay (Skor 20/soal)</h3>
+                    <p class="text-sm text-gray-400">Jawablah pertanyaan berikut dengan jelas dan terstruktur.</p>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">1. Jelaskan konsep Segitiga Eksposur secara komprehensif, termasuk bagaimana ketiga elemennya (Aperture, Shutter Speed, ISO) saling berinteraksi untuk menghasilkan eksposur yang seimbang!</p>
+                            <textarea name="essay1" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">2. Anda sedang merekam video wawancara di luar ruangan pada siang hari yang terik, dan ingin background blur (bokeh). Jelaskan kombinasi pengaturan Aperture, Shutter Speed, dan ISO yang akan Anda gunakan, serta alasannya!</p>
+                            <textarea name="essay2" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">3. Apa yang dimaksud dengan "Aturan 180°" dalam videografi? Mengapa aturan ini penting untuk menghasilkan motion blur yang natural? Berikan contoh perhitungannya!</p>
+                            <textarea name="essay3" rows="3" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">4. Bandingkan kamera DSLR, Mirrorless, dan Cinema Camera dari segi karakteristik, kelebihan, dan penggunaannya dalam produksi video!</p>
+                            <textarea name="essay4" rows="4" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                        <div class="bg-luxury-900/50 p-4 rounded-lg">
+                            <p class="font-medium text-white mb-2">5. Berdasarkan studi kasus "ISO tinggi di siang hari" di atas, analisis kesalahan yang dilakukan siswa tersebut dan jelaskan langkah-langkah perbaikan yang seharusnya ia lakukan untuk mendapatkan eksposur yang benar!</p>
+                            <textarea name="essay5" rows="4" class="w-full bg-luxury-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-luxury-gold focus:outline-none"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi -->
+                <div class="pt-6 border-t border-luxury-gold/20 space-y-4">
+                    <button type="button" onclick="hitungNilai()" class="w-full bg-luxury-gold text-luxury-900 font-bold py-3 rounded-lg hover:bg-yellow-400 transition shadow-lg">
+                        ✉️ KIRIM JAWABAN & LIHAT HASIL
+                    </button>
+                    
+                    <div id="hasilNilai" class="hidden bg-luxury-900 p-6 rounded-xl border border-luxury-gold/30 text-center space-y-4">
+                        <h4 class="text-xl font-bold text-white">📊 Hasil Uji Formatif</h4>
+                        <div class="text-4xl font-serif font-bold text-luxury-gold" id="skorTotal">0</div>
+                        <p class="text-sm text-gray-400" id="detailSkor">Bagian A (PG): 0/100 | Bagian B (Essay): Dinilai Manual oleh Guru</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-4">
+                            <button type="button" onclick="alert('Simulasi: File PDF lengkap sedang diunduh...')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">📥 UNDUH PDF LENGKAP</button>
+                            <button type="button" onclick="alert('Simulasi: File skor sedang diunduh...')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">📊 UNDUH SKOR SAJA</button>
+                            <button type="button" onclick="alert('Simulasi: Email telah dikirim ke ausianggina@gmail.com')" class="bg-luxury-700 text-white text-sm py-2 rounded hover:bg-luxury-600 transition">✉️ KIRIM EMAIL GURU</button>
+                        </div>
+                        <button type="button" onclick="location.reload()" class="text-sm text-gray-400 hover:text-white underline mt-4">🔄 MULAI ULANG</button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-luxury-900 border-t border-luxury-gold/10 py-8 text-center">
+        <p class="text-gray-500 text-sm">© 2026 AUSI ANGGINA, S.Pd — SMKN 1 KOTO BALINGKA. All rights reserved.</p>
+    </footer>
+
+    <!-- Script Simulator & Uji Formatif -->
+    <script>
+        // === SIMULATOR SEGITIGA EKSPOSUR ===
+        const apertureValues = ['f/1.4', 'f/2', 'f/2.8', 'f/4', 'f/5.6', 'f/8', 'f/11', 'f/16'];
+        const shutterValues = ['1/15', '1/30', '1/60', '1/125', '1/250', '1/500', '1/1000', '1/2000'];
+        const isoValues = ['100', '200', '400', '800', '1600', '3200', '6400', '12800'];
+
+        function updateSimulator() {
+            const aperture = parseInt(document.getElementById('apertureSlider').value);
+            const shutter = parseInt(document.getElementById('shutterSlider').value);
+            const iso = parseInt(document.getElementById('isoSlider').value);
+
+            // Update label nilai
+            document.getElementById('apertureValue').innerText = apertureValues[aperture - 1];
+            document.getElementById('shutterValue').innerText = shutterValues[shutter - 1];
+            document.getElementById('isoValue').innerText = isoValues[iso - 1];
+
+            // Hitung eksposur (semakin tinggi nilai slider = semakin terang)
+            // Aperture: nilai slider besar = f-number besar = gelap, jadi kita balik
+            const apertureLight = 9 - aperture; // f/1.4 (slider 1) = terang (8), f/16 (slider 8) = gelap (1)
+            const shutterLight = 9 - shutter;   // 1/15 (slider 1) = terang (8), 1/2000 (slider 8) = gelap (1)
+            const isoLight = iso;               // ISO 100 (slider 1) = gelap (1), ISO 12800 (slider 8) = terang (8)
+
+            const totalExposure = apertureLight + shutterLight + isoLight; // range 3 - 24
+            const neutralPoint = 13.5; // titik tengah
+            const ev = totalExposure - neutralPoint; // -10.5 sampai +10.5
+
+            // Update preview visual
+            const preview = document.getElementById('exposurePreview');
+            const status = document.getElementById('exposureStatus');
+            const desc = document.getElementById('exposureDescription');
+
+            // Hitung brightness (0-255)
+            let brightness = Math.max(0, Math.min(255, 128 + (ev * 10)));
+            
+            // Hitung noise berdasarkan ISO
+            const noiseLevel = (iso - 1) * 3; // 0 - 21
+            
+            let bgStyle = `rgb(${brightness}, ${brightness}, ${brightness})`;
+            if (noiseLevel > 5) {
+                bgStyle = `repeating-conic-gradient(rgb(${brightness}, ${brightness}, ${brightness}) 0% 25%, rgb(${Math.max(0,brightness-20)}, ${Math.max(0,brightness-20)}, ${Math.max(0,brightness-20)}) 0% 50%) 50% / ${Math.max(2, 10-noiseLevel/3)}px ${Math.max(2, 10-noiseLevel/3)}px`;
+            }
+            preview.style.background = bgStyle;
+
+            // Update status
+            if (ev < -3) {
+                status.innerText = `Underexposed (${ev.toFixed(1)} EV)`;
+                status.className = 'text-xl font-bold text-blue-400';
+                desc.innerText = 'Gambar terlalu gelap — detail di area shadow hilang.';
+            } else if (ev > 3) {
+                status.innerText = `Overexposed (+${ev.toFixed(1)} EV)`;
+                status.className = 'text-xl font-bold text-red-400';
+                desc.innerText = 'Gambar terlalu terang — detail di area highlight hilang (blown out).';
+            } else {
+                status.innerText = `Normal (${ev >= 0 ? '+' : ''}${ev.toFixed(1)} EV)`;
+                status.className = 'text-xl font-bold text-luxury-gold';
+                desc.innerText = 'Eksposur seimbang — gambar terlihat natural.';
+            }
+
+            if (noiseLevel > 10) {
+                desc.innerText += ' ⚠️ Noise sangat tinggi — pertimbangkan menurunkan ISO.';
+            }
+        }
+
+        function resetSimulator() {
+            document.getElementById('apertureSlider').value = 4;
+            document.getElementById('shutterSlider').value = 4;
+            document.getElementById('isoSlider').value = 4;
+            updateSimulator();
+        }
+
+        // Event listener untuk slider
+        document.getElementById('apertureSlider').addEventListener('input', updateSimulator);
+        document.getElementById('shutterSlider').addEventListener('input', updateSimulator);
+        document.getElementById('isoSlider').addEventListener('input', updateSimulator);
+
+        // Inisialisasi
+        updateSimulator();
+
+        // === UJI FORMATIF ===
+        function hitungNilai() {
+            // Validasi Data Siswa
+            const nama = document.getElementById('nama').value;
+            const nis = document.getElementById('nis').value;
+            const tanggal = document.getElementById('tanggal').value;
+            const kelas = document.getElementById('kelas').value;
+
+            if (!nama || !nis || !tanggal || !kelas) {
+                alert("⚠️ Mohon lengkapi semua Data Siswa terlebih dahulu!");
+                return;
+            }
+
+            // Kunci Jawaban Bagian A (Pertemuan 4)
+            const kunciJawaban = {
+                q1: 'b', // Aperture, Shutter Speed, ISO
+                q2: 'a', // DoF lebih tipis
+                q3: 'b', // 1/48 atau 1/50
+                q4: 'c', // Noise
+                q5: 'b', // Mirrorless
+                q6: 'd', // Manual
+                q7: 'b', // ND Filter
+                q8: 'b', // Area ketajaman fokus
+                q9: 'b', // Silica gel
+                q10: 'b' // Motion blur
+            };
+
+            let skorPG = 0;
+            let terjawab = 0;
+
+            for (let i = 1; i <= 10; i++) {
+                const jawaban = document.querySelector(`input[name="q${i}"]:checked`);
+                if (jawaban) {
+                    terjawab++;
+                    if (jawaban.value === kunciJawaban[`q${i}`]) {
+                        skorPG += 10;
+                    }
+                }
+            }
+
+            if (terjawab < 10) {
+                alert(`⚠️ Mohon lengkapi semua 10 soal pilihan ganda terlebih dahulu! (Baru terjawab ${terjawab})`);
+                return;
+            }
+
+            let essayKosong = false;
+            for (let i = 1; i <= 5; i++) {
+                if (document.querySelector(`textarea[name="essay${i}"]`).value.trim() === "") {
+                    essayKosong = true;
+                    break;
+                }
+            }
+
+            if (essayKosong) {
+                alert("⚠️ Mohon isi semua 5 soal essay terlebih dahulu!");
+                return;
+            }
+
+            document.getElementById('skorTotal').innerText = skorPG;
+            document.getElementById('detailSkor').innerText = `Bagian A (PG): ${skorPG}/100 | Bagian B (Essay): Menunggu Penilaian Guru`;
+            document.getElementById('hasilNilai').classList.remove('hidden');
+            
+            document.getElementById('hasilNilai').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            alert(`✅ Jawaban berhasil diproses!\n\nNama: ${nama}\nNIS: ${nis}\nKelas: ${kelas}\nSkor Sementara (Pilihan Ganda): ${skorPG}/100\n\nCatatan: Bagian Essay akan dinilai secara manual oleh guru.`);
+        }
+    </script>
+
+</body>
+</html>

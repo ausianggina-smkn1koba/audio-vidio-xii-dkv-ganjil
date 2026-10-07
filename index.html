@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Vidio XII DKV Ganjil | AUSI ANGGINA, S.Pd</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        luxury: {
+                            900: '#0B0F19', // Deep Navy Black
+                            800: '#151B2B', // Slightly lighter navy
+                            700: '#1E293B', // Slate
+                            gold: '#D4AF37', // Classic Gold
+                            goldLight: '#F3E5AB',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(21, 27, 43, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #D4AF37 0%, #F3E5AB 50%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .book-shadow {
+            box-shadow: 0 25px 50px -12px rgba(212, 175, 55, 0.25), 0 0 30px rgba(212, 175, 55, 0.1);
+        }
+        .hover-lift {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px -5px rgba(212, 175, 55, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-luxury-900 text-gray-200 font-sans antialiased selection:bg-luxury-gold selection:text-luxury-900">
+
+    <!-- Navigasi -->
+    <nav class="fixed w-full z-50 glass border-b border-luxury-gold/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-gradient-to-br from-luxury-gold to-yellow-600 rounded-sm flex items-center justify-center font-serif font-bold text-luxury-900">A</div>
+                    <span class="font-serif text-xl font-semibold text-white tracking-wide">DKV XII <span class="text-luxury-gold">Ganjil</span></span>
+                </div>
+                <div class="hidden md:flex space-x-8 text-sm font-medium tracking-wide">
+                    <a href="#about" class="hover:text-luxury-gold transition-colors duration-300">Tentang Buku</a>
+                    <a href="#author" class="hover:text-luxury-gold transition-colors duration-300">Penulis</a>
+                    <a href="#toc" class="hover:text-luxury-gold transition-colors duration-300">Daftar Isi</a>
+                    <a href="mailto:ausianggina@gmail.com" class="px-5 py-2 border border-luxury-gold text-luxury-gold rounded-full hover:bg-luxury-gold hover:text-luxury-900 transition-all duration-300">Hubungi Penulis</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <!-- Background Elements -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full z-0 pointer-events-none">
+            <div class="absolute top-20 left-10 w-72 h-72 bg-luxury-gold/10 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-20 right-10 w-96 h-96 bg-blue-900/20 rounded-full blur-3xl"></div>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-16">
+            <div class="lg:w-1/2 text-center lg:text-left space-y-8">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-luxury-gold/30 bg-luxury-gold/10 text-luxury-gold text-xs font-semibold tracking-widest uppercase">
+                    <span class="w-2 h-2 rounded-full bg-luxury-gold animate-pulse"></span>
+                    Buku Ajar SMK Kelas XII
+                </div>
+                <h1 class="font-serif text-5xl lg:text-7xl font-bold leading-tight text-white">
+                    Audio Vidio <br>
+                    <span class="gold-gradient-text">XII DKV Ganjil</span>
+                </h1>
+                <p class="text-lg text-gray-400 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                    Panduan komprehensif dan elegan dalam menguasai alur produksi audio-video profesional. Dari pra-produksi, teknik sinematik, hingga pasca-produksi dan distribusi karya multimedia berstandar industri.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4">
+                    <a href="#toc" class="px-8 py-4 bg-gradient-to-r from-luxury-gold to-yellow-600 text-luxury-900 font-bold rounded-lg hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] transition-all duration-300 text-center">
+                        Jelajahi Materi
+                    </a>
+                    <a href="#author" class="px-8 py-4 border border-gray-600 text-white font-medium rounded-lg hover:border-luxury-gold hover:text-luxury-gold transition-all duration-300 text-center">
+                        Tentang Penulis
+                    </a>
+                </div>
+                <div class="pt-8 flex items-center justify-center lg:justify-start gap-6 text-sm text-gray-500">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-luxury-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        6 Bab Komprehensif
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5 text-luxury-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        16 Pertemuan Terstruktur
+                    </div>
+                </div>
+            </div>
+            
+            <div class="lg:w-1/2 flex justify-center perspective-1000">
+                <!-- GANTI COVER BUKU DI SINI: Pastikan file 'cover-buku.png' berada di folder yang sama -->
+                <div class="relative group">
+                    <div class="absolute -inset-1 bg-gradient-to-r from-luxury-gold to-yellow-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                    <img src="cover-buku.png" alt="Cover Buku Audio Vidio XII DKV Ganjil" class="relative w-72 md:w-80 rounded-r-2xl rounded-l-sm book-shadow transform group-hover:scale-[1.02] transition-transform duration-500 border-l-4 border-luxury-gold/30">
+                    <div class="absolute -bottom-6 -right-6 glass px-6 py-4 rounded-xl border border-luxury-gold/20">
+                        <p class="text-xs text-gray-400 uppercase tracking-wider">Penulis</p>
+                        <p class="font-serif text-lg font-semibold text-white">AUSI ANGGINA, S.Pd</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Keunggulan Buku -->
+    <section id="about" class="py-24 bg-luxury-800 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="font-serif text-3xl md:text-4xl font-bold text-white mb-4">Standar <span class="text-luxury-gold">Profesional</span></h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">Dirancang untuk membekali siswa DKV dengan kompetensi teknis dan estetika yang relevan dengan industri kreatif modern.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="glass p-8 rounded-2xl hover-lift">
+                    <div class="w-12 h-12 bg-luxury-gold/10 rounded-xl flex items-center justify-center mb-6 text-luxury-gold">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                    </div>
+                    <h3 class="font-serif text-xl font-semibold text-white mb-3">Alur Produksi Terstruktur</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Memandu siswa dari tahap ideasi, pra-produksi, eksekusi lapangan, hingga pasca-produksi dengan metodologi yang jelas dan terukur.</p>
+                </div>
+                <div class="glass p-8 rounded-2xl hover-lift">
+                    <div class="w-12 h-12 bg-luxury-gold/10 rounded-xl flex items-center justify-center mb-6 text-luxury-gold">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <h3 class="font-serif text-xl font-semibold text-white mb-3">Teknik Sinematik</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Pembahasan mendalam mengenai segitiga eksposur, komposisi visual, pergerakan kamera, dan tata cahaya (three-point lighting).</p>
+                </div>
+                <div class="glass p-8 rounded-2xl hover-lift">
+                    <div class="w-12 h-12 bg-luxury-gold/10 rounded-xl flex items-center justify-center mb-6 text-luxury-gold">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                    </div>
+                    <h3 class="font-serif text-xl font-semibold text-white mb-3">Audio & Pasca-Produksi</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Teknik perekaman suara jernih, editing video (rough cut hingga fine cut), color grading, mixing, hingga rendering akhir.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tentang Penulis -->
+    <section id="author" class="py-24 bg-luxury-900">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="glass rounded-3xl p-8 md:p-12 border border-luxury-gold/10 flex flex-col md:flex-row items-center gap-12">
+                <div class="md:w-1/3 flex justify-center">
+                    <!-- GANTI FOTO PENULIS DI SINI: Pastikan file 'photo-penulis.png' berada di folder yang sama -->
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-luxury-gold rounded-full blur-xl opacity-20"></div>
+                        <img src="photo-penulis.png" alt="Foto AUSI ANGGINA, S.Pd" class="relative w-56 h-56 md:w-64 md:h-64 object-cover rounded-full border-4 border-luxury-800 shadow-2xl">
+                    </div>
+                </div>
+                <div class="md:w-2/3 text-center md:text-left">
+                    <h2 class="font-serif text-3xl md:text-4xl font-bold text-white mb-2">AUSI ANGGINA, S.Pd</h2>
+                    <p class="text-luxury-gold font-medium mb-6 tracking-wide uppercase text-sm">Guru Produktif DKV & Praktisi Multimedia</p>
+                    <p class="text-gray-400 leading-relaxed mb-8">
+                        Berbasis di <strong class="text-gray-200">SMKN 1 Koto Balingka</strong>, Ausi Anggina, S.Pd telah mendedikasikan karirnya untuk mengembangkan kompetensi siswa di bidang Desain Komunikasi Visual. Dengan pendekatan pembelajaran berbasis proyek (project-based learning), buku ini merupakan kristalisasi pengalaman mengajar untuk membekali siswa dengan skill industri yang relevan, mulai dari perencanaan naskah hingga teknik editing dan distribusi profesional.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-6 justify-center md:justify-start">
+                        <a href="mailto:ausianggina@gmail.com" class="flex items-center gap-3 text-gray-300 hover:text-luxury-gold transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            ausianggina@gmail.com
+                        </a>
+                        <div class="flex items-center gap-3 text-gray-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                            SMKN 1 Koto Balingka
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Daftar Isi (16 Pertemuan dalam 6 Bab) -->
+    <section id="toc" class="py-24 bg-luxury-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="font-serif text-3xl md:text-4xl font-bold text-white mb-4">Daftar <span class="text-luxury-gold">Isi</span></h2>
+                <p class="text-gray-400">6 Bab Komprehensif • 16 Pertemuan Terstruktur</p>
+                <p class="text-sm text-gray-500 mt-2">Klik pada setiap pertemuan untuk membuka materi (Tab Baru)</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Bab 1 -->
+                <div class="glass rounded-2xl p-6 border-t-2 border-luxury-gold hover-lift">
+                    <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">Bab 1: Dasar & Pra-Produksi</h3>
+                    <ul class="space-y-3">
+                        <li><a href="1.html" target="_blank" class="flex items-start gap-3 group"><span class="mt-1 w-6 h-6 rounded-full bg-luxury-700 text-xs flex items-center justify-center text-luxury-gold group-hover:bg-luxury-gold group-hover:text-luxury-900 transition">1</span><span class="text-sm text-gray-300 group-hover:text-white transition">Dasar-dasar dan Alur Produksi Audio Video</span></a></li>
+                        <li><a href="2.html" target="_blank" class="flex items-start gap-3 group"><span class="mt-1 w-6 h-6 rounded-full bg-luxury-700 text-xs flex items-center justify-center text-luxury-gold group-hover:bg-luxury-gold group-hover:text-luxury-900 transition">2</span><span class="text-sm text-gray-300 group-hover:text-white transition">Pra-Produksi: Ide, Konsep, dan Naskah</span></a></li>
+                        <li><a href="3.html" target="_blank" class="flex items-start gap-3 group"><span class="mt-1 w-6 h-6 rounded-full bg-luxury-700 text-xs flex items-center justify-center text-luxury-gold group-hover:bg-luxury-gold group-hover:text-luxury-900 transition">3</span><span class="text-sm text-gray-300 group-hover:text-white transition">Pra-Produksi: Storyboard, Shot List & Budgeting</span></a></li>
+                    </ul>
+                </div>
+
+                <!-- Bab 2 -->
+                <div class="glass rounded-2xl p-6 border-t-2 border-luxury-gold hover-lift">
+                    <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">Bab 2: Produksi Video</h3>
+                    <ul class="space-y-3">
+                        <li><a href="4.html" target="_blank" class="flex items-start gap-3 group"><span class="mt-1 w-6 h-6 rounded-full bg-luxury-700 text-xs flex items-center justify-center text-luxury-gold group-hover:bg-luxury-gold group-hover:text-luxury-900 transition">4</span><span class="text-sm text-gray-300 group-hover:text-white transition">Pengoperasian Kamera & Segitiga Eksposur</span></a></li>
+                        <li><a href="5.html" target="_blank" class="flex items-start gap-3 group"><span class="mt-1 w-6 h-6 rounded-full bg-luxury-700 text-xs flex items-center justify-center text-luxury-gold group-hover:bg-luxury-gold group-hover:text-luxury-900 transition">5</span><span class="text-sm text-gray-300 group-hover:text-white transition">Teknik Pengambilan Gambar (Angle & Shot Size)</span></a></li>
+                        <li><a href="6.html" target="_blank" class="flex items-start gap-3 group"><span class="mt-1 w-6 h-6 rounded-full bg-luxury-700 text-xs flex items-center justify-center text-luxury-gold group-hover:bg-luxury-gold group-hover:text-luxury-900 transition">6</span><span class="text-sm text-gray-300 group-hover:text-white transition">Pergerakan Kamera & Tata Cahaya (Lighting)</span></a></li>
+                    </ul>
+                </div>
+
+                <!-- Bab 3 -->
+                <div class="glass rounded-2xl p-6 border-t-2 border-luxury-gold hover-lift">
+                    <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">Bab 3: Produksi Audio & Evaluasi</h3>
+                    <ul class="space-y-3">
+                        <li><a href="7.html" target="_blank" class="flex items-start gap-3 group"><span class="mt-1 w-6 h-6 rounded-full bg-luxury-700 text-xs flex items-center justify-center text-luxury-gold group-hover:bg-luxury-gold group-hover:text-luxury-900 transition">7</span><span class="text-sm text-gray-300 group-hover:text-white transition">Teknik Perekaman Audio dan Foley</span></a></li>
+                        <li><a href="8.html" target="_blank" class="flex items-start gap-3 group"><span class="mt-1 w-6 h-6 rounded-full bg-red-500/20 text-xs flex items-center justify-center text-red-400 font-bold border border-red-500/30">8</span><span class="text-sm font-bold text-red-400 group-hover:text-red-300 transition">UJIAN TENGAH SEMESTER (UTS)</span></a></li>
+                    </ul>
+                </div>
+
+                <!-- Bab 4 -->
+                <div class="glass rounded-2xl p-6 border-t-2 border-luxury-gold hover-lift">
+                    <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">Bab 4: Pasca-Produksi (Editing)</h3>
+                    <ul class="space-y-3">
+                        <li><a href="9.html" target="_blank" class="flex items-start gap-3 group"><span class="mt-1 w-6 h-6 rounded-full bg-luxury-700 text-xs flex items-center justify-center text-luxury-gold group-hover:bg-luxury-gold group-hover:text-luxury-900 transition">9</span><span class="text-sm text-gray-300 group-hover:text-white transition">Manajemen Aset dan Rough Cut</span></a></li>
+                        <li><a href="10.html" target="_blank" class="flex items-start gap-3 group"><span class="mt-1 w-6 h-6 rounded-full bg-luxury-700 text-xs flex items-center justify-center text-luxury-gold group-hover:bg-luxury-gold group-hover:text-luxury-900 transition">10</span><span class="text-sm text-gray-300 group-hover:text-white transition">Fine Cut dan Continuity Editing</span></a></li>
+                        <li><a href="11.html" target="_blank" class="flex items-start gap-3 group"><span class="mt-1 w-6 h-6 rounded-full bg-luxury-700 text-xs flex items-center justify-center text-luxury-gold group-hover:bg-luxury-gold group-hover:text-luxury-900 transition">11</span><span class="text-sm text-gray-300 group-hover:text-white transition">Transisi, Efek Dasar, dan Titling</span></a></li>
+                    </ul>
+                </div>
+
+                <!-- Bab 5 -->
+                <div class="glass rounded-2xl p-6 border-t-2 border-luxury-gold hover-lift">
+                    <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">Bab 5: Penyempurnaan Karya</h3>
+                    <ul class="space-y-3">
+                        <li><a href="12.html" target="_blank" class="flex items-start gap-3 group"><span class="mt-1 w-6 h-6 rounded-full bg-luxury-700 text-xs flex items-center justify-center text-luxury-gold group-hover:bg-luxury-gold group-hover:text-luxury-900 transition">12</span><span class="text-sm text-gray-300 group-hover:text-white transition">Color Correction dan Color Grading</span></a></li>
+                        <li><a href="13.html" target="_blank" class="flex items-start gap-3 group"><span class="mt-1 w-6 h-6 rounded-full bg-luxury-700 text-xs flex items-center justify-center text-luxury-gold group-hover:bg-luxury-gold group-hover:text-luxury-900 transition">13</span><span class="text-sm text-gray-300 group-hover:text-white transition">Audio Mixing dan Mastering</span></a></li>
+                        <li><a href="14.html" target="_blank" class="flex items-start gap-3 group"><span class="mt-1 w-6 h-6 rounded-full bg-luxury-700 text-xs flex items-center justify-center text-luxury-gold group-hover:bg-luxury-gold group-hover:text-luxury-900 transition">14</span><span class="text-sm text-gray-300 group-hover:text-white transition">Visual Effects (VFX) dan Green Screen</span></a></li>
+                    </ul>
+                </div>
+
+                <!-- Bab 6 -->
+                <div class="glass rounded-2xl p-6 border-t-2 border-luxury-gold hover-lift">
+                    <h3 class="font-serif text-xl font-bold text-luxury-gold mb-4">Bab 6: Distribusi & Evaluasi</h3>
+                    <ul class="space-y-3">
+                        <li><a href="15.html" target="_blank" class="flex items-start gap-3 group"><span class="mt-1 w-6 h-6 rounded-full bg-luxury-700 text-xs flex items-center justify-center text-luxury-gold group-hover:bg-luxury-gold group-hover:text-luxury-900 transition">15</span><span class="text-sm text-gray-300 group-hover:text-white transition">Rendering, Format Berkas, dan Publikasi</span></a></li>
+                        <li><a href="16.html" target="_blank" class="flex items-start gap-3 group"><span class="mt-1 w-6 h-6 rounded-full bg-red-500/20 text-xs flex items-center justify-center text-red-400 font-bold border border-red-500/30">16</span><span class="text-sm font-bold text-red-400 group-hover:text-red-300 transition">UJIAN AKHIR SEMESTER (UAS)</span></a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-luxury-900 border-t border-luxury-gold/10 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-3 gap-12 mb-12">
+                <div>
+                    <h3 class="font-serif text-2xl font-bold text-white mb-4">Audio Vidio <span class="text-luxury-gold">XII DKV</span></h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Buku ajar resmi yang dirancang untuk memenuhi standar kompetensi lulusan SMK Bidang Keahlian Desain Komunikasi Visual, Semester Ganjil.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-white mb-4 uppercase tracking-wider text-sm">Kontak Penulis</h4>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li class="flex items-center gap-3">
+                            <span class="text-luxury-gold">✉️</span> 
+                            <a href="mailto:ausianggina@gmail.com" class="hover:text-luxury-gold transition">ausianggina@gmail.com</a>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="text-luxury-gold">🏫</span> 
+                            SMKN 1 Koto Balingka
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-white mb-4 uppercase tracking-wider text-sm">Tautan Cepat</h4>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li><a href="#about" class="hover:text-luxury-gold transition">Tentang Buku</a></li>
+                        <li><a href="#author" class="hover:text-luxury-gold transition">Profil Penulis</a></li>
+                        <li><a href="#toc" class="hover:text-luxury-gold transition">Daftar Isi Lengkap</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-gray-500 text-sm">© 2026 AUSI ANGGINA, S.Pd — SMKN 1 KOTO BALINGKA. All rights reserved.</p>
+                <p class="text-gray-600 text-xs italic font-serif">"Karya audiovisual adalah cerminan kreativitas yang diabadikan melalui teknik dan hati."</p>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
